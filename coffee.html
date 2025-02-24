@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coffee Shaky</title>
+  <!-- Optional: Google Font for a fancier look -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f8f1e4, #e0d3c4);
+      font-family: 'Montserrat', sans-serif;
+      color: #4e342e;
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 3em;
+      margin-bottom: 20px;
+      color: #6f4e37;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    }
+    /* Coffee Card Grid */
+    .coffee-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .coffee-card {
+      background: #faf3ee;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      width: 150px;
+      text-align: center;
+      cursor: pointer;
+      padding: 15px;
+      transition: transform 0.3s, border-color 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+    .coffee-card:hover {
+      transform: translateY(-5px);
+    }
+    .coffee-card.selected {
+      border-color: #6f4e37;
+    }
+    .coffee-icon {
+      font-size: 50px;
+      margin-bottom: 10px;
+    }
+    /* Default icon size for other coffees */
+    .coffee-icon img {
+      width: 50px;
+      height: 50px;
+      display: block;
+      margin: 0 auto;
+    }
+    /* Make Espresso icon larger */
+    .coffee-card[data-coffee="Espresso"] .coffee-icon img {
+      width: 70px;
+      height: 70px;
+    }
+    .coffee-card p {
+      margin: 0;
+      font-weight: 500;
+      font-size: 1.1em;
+    }
+    /* Order Form */
+    form {
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #6f4e37;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #5a3e2b;
+    }
+    #orderStatus {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 1.1em;
+    }
+    /* Queue Styles */
+    h2 {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 1.8em;
+      color: #6f4e37;
+    }
+    #orderQueue {
+      list-style-type: none;
+      padding: 0;
+      max-height: 250px;
+      overflow-y: auto;
+      border-top: 1px solid #ddd;
+      margin-top: 15px;
+    }
+    #orderQueue li {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Coffee Shaky</h1>
+    
+    <!-- Coffee (and Tea) Options -->
+    <div class="coffee-options">
+      <div class="coffee-card" data-coffee="Espresso">
+        <div class="coffee-icon">
+          <img src="espresso.png" alt="Espresso Icon" />
+        </div>
+        <p>Espresso</p>
+      </div>
+      <div class="coffee-card" data-coffee="Latte">
+        <div class="coffee-icon">☕</div>
+        <p>Latte</p>
+      </div>
+      <div class="coffee-card" data-coffee="Cappuccino">
+        <div class="coffee-icon">☕</div>
+        <p>Cappuccino</p>
+      </div>
+      <div class="coffee-card" data-coffee="Americano">
+        <div class="coffee-icon">☕</div>
+        <p>Americano</p>
+      </div>
+      <!-- New Tea Option -->
+      <div class="coffee-card" data-coffee="Tea">
+        <div class="coffee-icon">🍵</div>
+        <p>Tea</p>
+      </div>
+    </div>
+    
+    <!-- Order Form -->
+    <form id="orderForm">
+      <div class="form-group">
+        <label for="userName">Your Name:</label>
+        <input type="text" id="userName" placeholder="Enter your name" required>
+      </div>
+      <div class="form-group">
+        <label for="specialRequest">Special Request (optional):</label>
+        <textarea id="specialRequest" placeholder="Any special instructions..."></textarea>
+      </div>
+      <button type="submit">Place Order</button>
+    </form>
+    <div id="orderStatus"></div>
+    
+    <!-- Order Queue -->
+    <h2>Queue</h2>
+    <ul id="orderQueue"></ul>
+
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Coffee card selection
+      let selectedCoffee = null;
+      const coffeeCards = document.querySelectorAll('.coffee-card');
+
+      coffeeCards.forEach(card => {
+        card.addEventListener('click', () => {
+          coffeeCards.forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedCoffee = card.getAttribute('data-coffee');
+        });
+      });
+
+      // Order form handling
+      let orders = [];
+      const orderForm = document.getElementById('orderForm');
+      const orderStatus = document.getElementById('orderStatus');
+      const orderQueue = document.getElementById('orderQueue');
+
+      orderForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('userName');
+        const specialRequestInput = document.getElementById('specialRequest');
+
+        const name = nameInput.value.trim();
+        if (!name) {
+          orderStatus.textContent = 'Please enter your name.';
+          return;
+        }
+        if (!selectedCoffee) {
+          orderStatus.textContent = 'Please select a coffee (or tea).';
+          return;
+        }
+
+        const specialRequest = specialRequestInput.value.trim();
+        const order = {
+          name: name,
+          coffee: selectedCoffee,
+          specialRequest: specialRequest,
+          timestamp: new Date().toLocaleTimeString()
+        };
+
+        // Add order to queue and update UI
+        orders.push(order);
+        updateQueue();
+
+        orderStatus.textContent = 'Your order has been placed!';
+        
+        // Reset form fields and selection
+        nameInput.value = '';
+        specialRequestInput.value = '';
+        selectedCoffee = null;
+        coffeeCards.forEach(card => card.classList.remove('selected'));
+
+        /* Firebase integration can be added here.
+        Example:
+        db.collection("orders").add(order)
+          .then((docRef) => {
+            orderStatus.textContent = 'Order placed! Order ID: ' + docRef.id;
+          })
+          .catch((error) => {
+            console.error("Error placing order: ", error);
+            orderStatus.textContent = 'Error placing your order.';
+          });
+        */
+      });
+
+      function updateQueue() {
+        orderQueue.innerHTML = '';
+        orders.forEach((order) => {
+          const li = document.createElement('li');
+          li.textContent = `${order.timestamp} - ${order.name}: ${order.coffee}` +
+                           (order.specialRequest ? ` (Special: ${order.specialRequest})` : '');
+          orderQueue.appendChild(li);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
