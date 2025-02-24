@@ -11,14 +11,16 @@
     body {
       margin: 0;
       padding: 0;
-      background: linear-gradient(135deg, #f8f1e4, #e0d3c4);
+      /* Coffee background image - ensure coffee-bg.png is in the same directory */
+      background: url('coffee-bg.png') no-repeat center center fixed;
+      background-size: cover;
       font-family: 'Montserrat', sans-serif;
       color: #4e342e;
     }
     .container {
       max-width: 800px;
       margin: 30px auto;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.95); /* slight transparency for readability */
       border-radius: 12px;
       box-shadow: 0 6px 15px rgba(0,0,0,0.1);
       padding: 30px;
@@ -59,7 +61,7 @@
       font-size: 50px;
       margin-bottom: 10px;
     }
-    /* Default icon size for other coffees */
+    /* Default icon size for other beverages */
     .coffee-icon img {
       width: 50px;
       height: 50px;
@@ -139,7 +141,6 @@
       border-bottom: 1px solid #eee;
       font-size: 1em;
     }
-
     /* Responsive Design for iPhones and smaller screens */
     @media (max-width: 600px) {
       .container {
@@ -170,7 +171,7 @@
   <div class="container">
     <h1>Coffee Shaky</h1>
     
-    <!-- Coffee (and Tea) Options -->
+    <!-- Beverage Options -->
     <div class="coffee-options">
       <div class="coffee-card" data-coffee="Espresso">
         <div class="coffee-icon">
@@ -178,9 +179,9 @@
         </div>
         <p>Espresso</p>
       </div>
-      <div class="coffee-card" data-coffee="Latte">
+      <div class="coffee-card" data-coffee="Macchiato">
         <div class="coffee-icon">☕</div>
-        <p>Latte</p>
+        <p>Macchiato</p>
       </div>
       <div class="coffee-card" data-coffee="Cappuccino">
         <div class="coffee-icon">☕</div>
@@ -217,7 +218,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Coffee card selection
+      // Beverage card selection
       let selectedCoffee = null;
       const coffeeCards = document.querySelectorAll('.coffee-card');
 
