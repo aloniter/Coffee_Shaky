@@ -141,6 +141,16 @@
       border-bottom: 1px solid #eee;
       font-size: 1em;
     }
+    .order-actions {
+      margin-left: 10px;
+      font-size: 0.9em;
+    }
+    .order-actions button {
+      width: auto;
+      padding: 5px 8px;
+      font-size: 0.8em;
+      margin-left: 5px;
+    }
     /* Responsive Design for iPhones and smaller screens */
     @media (max-width: 600px) {
       .container {
@@ -216,83 +226,143 @@
     <ul id="orderQueue"></ul>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Beverage card selection
-      let selectedCoffee = null;
-      const coffeeCards = document.querySelectorAll('.coffee-card');
-
-      coffeeCards.forEach(card => {
-        card.addEventListener('click', () => {
-          coffeeCards.forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-          selectedCoffee = card.getAttribute('data-coffee');
-        });
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+    
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCVAN11EFH0bSP3GefRvICHyWKMto0-5mc",
+      authDomain: "coffee-shaky.firebaseapp.com",
+      projectId: "coffee-shaky",
+      storageBucket: "coffee-shaky.firebasestorage.app",
+      messagingSenderId: "319501505593",
+      appId: "1:319501505593:web:918b539e4b5cca36b4a9e8"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // DOM references
+    const coffeeCards = document.querySelectorAll('.coffee-card');
+    const orderForm = document.getElementById('orderForm');
+    const orderStatus = document.getElementById('orderStatus');
+    const orderQueue = document.getElementById('orderQueue');
+    
+    // Track selected coffee
+    let selectedCoffee = null;
+    
+    // Setup coffee card selection
+    coffeeCards.forEach(card => {
+      card.addEventListener('click', () => {
+        coffeeCards.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedCoffee = card.getAttribute('data-coffee');
       });
-
-      // Order form handling
-      let orders = [];
-      const orderForm = document.getElementById('orderForm');
-      const orderStatus = document.getElementById('orderStatus');
-      const orderQueue = document.getElementById('orderQueue');
-
-      orderForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const nameInput = document.getElementById('userName');
-        const specialRequestInput = document.getElementById('specialRequest');
-
-        const name = nameInput.value.trim();
-        if (!name) {
-          orderStatus.textContent = 'Please enter your name.';
-          return;
-        }
-        if (!selectedCoffee) {
-          orderStatus.textContent = 'Please select a beverage.';
-          return;
-        }
-
-        const specialRequest = specialRequestInput.value.trim();
+    });
+    
+    // Order form handling
+    orderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('userName');
+      const specialRequestInput = document.getElementById('specialRequest');
+      
+      const name = nameInput.value.trim();
+      if (!name) {
+        orderStatus.textContent = 'Please enter your name.';
+        return;
+      }
+      if (!selectedCoffee) {
+        orderStatus.textContent = 'Please select a beverage.';
+        return;
+      }
+      
+      const specialRequest = specialRequestInput.value.trim();
+      
+      try {
+        orderStatus.textContent = 'Processing your order...';
+        
+        // Create order object
         const order = {
           name: name,
-          coffee: selectedCoffee,
+          beverage: selectedCoffee,
           specialRequest: specialRequest,
-          timestamp: new Date().toLocaleTimeString()
+          timestamp: serverTimestamp(),
+          status: 'pending'
         };
-
-        // Add order to queue and update UI
-        orders.push(order);
-        updateQueue();
-
-        orderStatus.textContent = 'Your order has been placed!';
         
-        // Reset form fields and selection
+        // Add order to Firestore
+        const docRef = await addDoc(collection(db, "orders"), order);
+        
+        orderStatus.textContent = 'Order placed successfully!';
+        
+        // Reset form
         nameInput.value = '';
         specialRequestInput.value = '';
         selectedCoffee = null;
         coffeeCards.forEach(card => card.classList.remove('selected'));
-
-        /* Firebase integration can be added here.
-        Example:
-        db.collection("orders").add(order)
-          .then((docRef) => {
-            orderStatus.textContent = 'Order placed! Order ID: ' + docRef.id;
-          })
-          .catch((error) => {
-            console.error("Error placing order: ", error);
-            orderStatus.textContent = 'Error placing your order.';
-          });
-        */
-      });
-
-      function updateQueue() {
+        
+      } catch (error) {
+        console.error("Error adding order: ", error);
+        orderStatus.textContent = 'Error placing your order. Please try again.';
+      }
+    });
+    
+    // Listen for orders and display them
+    function setupOrdersListener() {
+      const ordersQuery = query(collection(db, "orders"), orderBy("timestamp", "desc"));
+      
+      onSnapshot(ordersQuery, (snapshot) => {
         orderQueue.innerHTML = '';
-        orders.forEach((order) => {
+        
+        if (snapshot.empty) {
+          const emptyMessage = document.createElement('li');
+          emptyMessage.textContent = 'No orders in queue';
+          orderQueue.appendChild(emptyMessage);
+          return;
+        }
+        
+        snapshot.forEach((doc) => {
+          const order = doc.data();
           const li = document.createElement('li');
-          li.textContent = `${order.timestamp} - ${order.name}: ${order.coffee}` +
-                           (order.specialRequest ? ` (Special: ${order.specialRequest})` : '');
+          
+          // Format timestamp
+          let timeString = 'Just now';
+          if (order.timestamp) {
+            const orderTime = order.timestamp.toDate();
+            timeString = orderTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+          
+          li.textContent = `${timeString} - ${order.name}: ${order.beverage}` +
+                         (order.specialRequest ? ` (Special: ${order.specialRequest})` : '');
+          
+          // Add complete button for staff
+          const actionsSpan = document.createElement('span');
+          actionsSpan.className = 'order-actions';
+          
+          const completeBtn = document.createElement('button');
+          completeBtn.textContent = 'Complete';
+          completeBtn.addEventListener('click', async () => {
+            try {
+              await deleteDoc(doc(db, "orders", doc.id));
+            } catch (error) {
+              console.error("Error removing order: ", error);
+            }
+          });
+          
+          actionsSpan.appendChild(completeBtn);
+          li.appendChild(actionsSpan);
           orderQueue.appendChild(li);
         });
-      }
+      });
+    }
+    
+    // Start the real-time listeners when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      setupOrdersListener();
     });
   </script>
 </body>
