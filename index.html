@@ -116,6 +116,20 @@
     button:hover {
       background: #5a3e2b;
     }
+    /* Action buttons */
+    .action-button {
+      width: auto;
+      padding: 8px 16px;
+      margin: 10px 5px;
+      background: #6f4e37;
+      display: inline-block;
+    }
+    .delete-button {
+      background: #b71c1c;
+    }
+    .delete-button:hover {
+      background: #d32f2f;
+    }
     #orderStatus {
       text-align: center;
       margin-top: 10px;
@@ -127,6 +141,10 @@
       margin-top: 30px;
       font-size: 1.8em;
       color: #6f4e37;
+    }
+    .queue-controls {
+      text-align: center;
+      margin-top: 15px;
     }
     #orderQueue {
       list-style-type: none;
@@ -141,15 +159,31 @@
       border-bottom: 1px solid #eee;
       font-size: 1em;
     }
-    .order-actions {
-      margin-left: 10px;
-      font-size: 0.9em;
-    }
-    .order-actions button {
-      width: auto;
-      padding: 5px 8px;
+    .order-status {
+      display: inline-block;
+      padding: 3px 6px;
+      border-radius: 3px;
       font-size: 0.8em;
       margin-left: 5px;
+      background: #ffebee;
+      color: #c62828;
+    }
+    .order-status.completed {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    /* Status indicator for connection */
+    .connection-status {
+      text-align: center;
+      margin-top: 5px;
+      font-size: 0.8em;
+      color: #999;
+    }
+    .connection-status.online {
+      color: #2e7d32;
+    }
+    .connection-status.offline {
+      color: #c62828;
     }
     /* Responsive Design for iPhones and smaller screens */
     @media (max-width: 600px) {
@@ -220,16 +254,21 @@
       <button type="submit">Place Order</button>
     </form>
     <div id="orderStatus"></div>
+    <div id="connectionStatus" class="connection-status">Connecting...</div>
     
     <!-- Order Queue -->
-    <h2>Queue</h2>
+    <h2>Orders Queue</h2>
+    <div class="queue-controls">
+      <button id="deleteOrdersBtn" class="action-button delete-button">Delete Orders</button>
+      <button id="refreshOrdersBtn" class="action-button">Refresh Orders</button>
+    </div>
     <ul id="orderQueue"></ul>
     
-    <!-- Debug status for development -->
-    <div id="debugStatus" style="margin-top: 20px; color: #999; font-size: 0.8em;"></div>
+    <!-- Debug status for development - can be removed for production -->
+    <div id="debugStatus" style="margin-top: 20px; color: #999; font-size: 0.8em; display: none;"></div>
   </div>
 
-  <!-- Updated Firebase SDK - using latest version -->
+  <!-- Updated Firebase SDK -->
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
@@ -243,7 +282,9 @@
       onSnapshot, 
       query, 
       orderBy, 
-      serverTimestamp 
+      serverTimestamp,
+      writeBatch,
+      where
     } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
     
     // Debug helper function
@@ -251,11 +292,12 @@
       const debugElement = document.getElementById('debugStatus');
       const timestamp = new Date().toLocaleTimeString();
       debugElement.innerHTML += `<div>${timestamp}: ${message}</div>`;
+      console.log(`${timestamp}: ${message}`); // Also log to console
     }
     
     updateDebug("Script started");
     
-    // Your web app's Firebase configuration - corrected storage bucket
+    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCVAN11EFH0bSP3GefRvICHyWKMto0-5mc",
       authDomain: "coffee-shaky.firebaseapp.com",
@@ -272,28 +314,23 @@
       app = initializeApp(firebaseConfig);
       db = getFirestore(app);
       updateDebug("Firebase initialized successfully");
-      
-      // Test connection
-      testFirebaseConnection();
+      updateConnectionStatus(true);
     } catch (error) {
       console.error("Firebase initialization error:", error);
       updateDebug(`Firebase initialization error: ${error.message}`);
       document.getElementById('orderStatus').textContent = "Unable to connect to the order system. Please try again later.";
+      updateConnectionStatus(false);
     }
     
-    // Test Firebase connection
-    async function testFirebaseConnection() {
-      try {
-        updateDebug("Testing Firebase connection");
-        await addDoc(collection(db, "connectionTests"), {
-          timestamp: serverTimestamp(),
-          test: "Connection test"
-        });
-        updateDebug("Firebase connection successful");
-      } catch (error) {
-        console.error("Firebase connection test failed:", error);
-        updateDebug(`Firebase connection test failed: ${error.message}`);
-        document.getElementById('orderStatus').textContent = "Database connection error. Please try again later.";
+    // Update connection status indicator
+    function updateConnectionStatus(isConnected) {
+      const statusElement = document.getElementById('connectionStatus');
+      if (isConnected) {
+        statusElement.textContent = "Connected to server";
+        statusElement.className = "connection-status online";
+      } else {
+        statusElement.textContent = "Disconnected from server";
+        statusElement.className = "connection-status offline";
       }
     }
     
@@ -302,6 +339,8 @@
     const orderForm = document.getElementById('orderForm');
     const orderStatus = document.getElementById('orderStatus');
     const orderQueue = document.getElementById('orderQueue');
+    const deleteOrdersBtn = document.getElementById('deleteOrdersBtn');
+    const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
     
     // Track selected coffee
     let selectedCoffee = null;
@@ -344,7 +383,8 @@
           beverage: selectedCoffee,
           specialRequest: specialRequest,
           timestamp: serverTimestamp(),
-          status: 'pending'
+          status: 'pending',
+          deviceId: generateDeviceId() // Add device identifier
         };
         
         // Add order to Firestore
@@ -363,8 +403,111 @@
         console.error("Error adding order: ", error);
         updateDebug(`Error adding order: ${error.message}`);
         orderStatus.textContent = 'Error placing your order. Please try again.';
+        updateConnectionStatus(false);
       }
     });
+    
+    // Generate a simple device identifier
+    function generateDeviceId() {
+      let deviceId = localStorage.getItem('coffeeShaky_deviceId');
+      if (!deviceId) {
+        deviceId = 'device_' + Math.random().toString(36).substring(2, 10);
+        localStorage.setItem('coffeeShaky_deviceId', deviceId);
+      }
+      return deviceId;
+    }
+    
+    // Delete all orders
+    deleteOrdersBtn.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to delete ALL orders?')) {
+        try {
+          updateDebug("Deleting all orders");
+          orderStatus.textContent = 'Deleting all orders...';
+          
+          // Get all orders
+          const ordersSnapshot = await getDocs(collection(db, "orders"));
+          
+          // Use a batch to delete multiple documents
+          const batch = writeBatch(db);
+          ordersSnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+          });
+          
+          // Commit the batch
+          await batch.commit();
+          
+          updateDebug(`Deleted ${ordersSnapshot.size} orders`);
+          orderStatus.textContent = `Deleted ${ordersSnapshot.size} orders.`;
+          
+        } catch (error) {
+          console.error("Error deleting orders:", error);
+          updateDebug(`Error deleting orders: ${error.message}`);
+          orderStatus.textContent = 'Error deleting orders. Please try again.';
+          updateConnectionStatus(false);
+        }
+      }
+    });
+    
+    // Refresh orders manually
+    refreshOrdersBtn.addEventListener('click', async () => {
+      try {
+        updateDebug("Manually refreshing orders");
+        orderStatus.textContent = 'Refreshing orders...';
+        
+        // Force a refresh by getting all orders
+        const ordersSnapshot = await getDocs(query(
+          collection(db, "orders"), 
+          orderBy("timestamp", "desc")
+        ));
+        
+        // Update the UI
+        updateOrdersUI(ordersSnapshot);
+        
+        orderStatus.textContent = `Orders refreshed. Found ${ordersSnapshot.size} orders.`;
+        updateConnectionStatus(true);
+        
+      } catch (error) {
+        console.error("Error refreshing orders:", error);
+        updateDebug(`Error refreshing orders: ${error.message}`);
+        orderStatus.textContent = 'Error refreshing orders. Please try again.';
+        updateConnectionStatus(false);
+      }
+    });
+    
+    // Update the UI with orders
+    function updateOrdersUI(snapshot) {
+      orderQueue.innerHTML = '';
+      
+      if (snapshot.empty) {
+        const emptyMessage = document.createElement('li');
+        emptyMessage.textContent = 'No orders in queue';
+        orderQueue.appendChild(emptyMessage);
+        return;
+      }
+      
+      snapshot.forEach((doc) => {
+        const order = doc.data();
+        const li = document.createElement('li');
+        
+        // Format timestamp
+        let timeString = 'Just now';
+        if (order.timestamp) {
+          const orderTime = order.timestamp.toDate();
+          timeString = orderTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        li.textContent = `${timeString} - ${order.name}: ${order.beverage}` +
+                      (order.specialRequest ? ` (Special: ${order.specialRequest})` : '');
+        
+        // Add status indicator
+        const statusSpan = document.createElement('span');
+        statusSpan.className = `order-status ${order.status === 'completed' ? 'completed' : ''}`;
+        statusSpan.textContent = order.status === 'completed' ? 'Ready' : 'Preparing';
+        li.appendChild(statusSpan);
+        
+        orderQueue.appendChild(li);
+      });
+    }
     
     // Listen for orders and display them
     function setupOrdersListener() {
@@ -374,60 +517,20 @@
         
         onSnapshot(ordersQuery, (snapshot) => {
           updateDebug(`Received ${snapshot.size} orders from database`);
-          orderQueue.innerHTML = '';
-          
-          if (snapshot.empty) {
-            const emptyMessage = document.createElement('li');
-            emptyMessage.textContent = 'No orders in queue';
-            orderQueue.appendChild(emptyMessage);
-            return;
-          }
-          
-          snapshot.forEach((doc) => {
-            const order = doc.data();
-            const li = document.createElement('li');
-            
-            // Format timestamp
-            let timeString = 'Just now';
-            if (order.timestamp) {
-              const orderTime = order.timestamp.toDate();
-              timeString = orderTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
-            
-            li.textContent = `${timeString} - ${order.name}: ${order.beverage}` +
-                          (order.specialRequest ? ` (Special: ${order.specialRequest})` : '');
-            
-            // Add complete button for staff
-            const actionsSpan = document.createElement('span');
-            actionsSpan.className = 'order-actions';
-            
-            const completeBtn = document.createElement('button');
-            completeBtn.textContent = 'Complete';
-            completeBtn.addEventListener('click', async () => {
-              try {
-                updateDebug(`Completing order: ${doc.id}`);
-                await deleteDoc(doc(db, "orders", doc.id));
-                updateDebug("Order marked as complete");
-              } catch (error) {
-                console.error("Error removing order: ", error);
-                updateDebug(`Error completing order: ${error.message}`);
-              }
-            });
-            
-            actionsSpan.appendChild(completeBtn);
-            li.appendChild(actionsSpan);
-            orderQueue.appendChild(li);
-          });
+          updateOrdersUI(snapshot);
+          updateConnectionStatus(true);
         }, (error) => {
           console.error("Error getting orders: ", error);
           updateDebug(`Error in orders listener: ${error.message}`);
-          orderQueue.innerHTML = '<li>Error loading orders. Please refresh the page.</li>';
+          orderQueue.innerHTML = '<li>Error loading orders. Please try refreshing.</li>';
+          updateConnectionStatus(false);
         });
         
         updateDebug("Orders listener setup complete");
       } catch (error) {
         console.error("Error setting up orders listener: ", error);
         updateDebug(`Failed to setup orders listener: ${error.message}`);
+        updateConnectionStatus(false);
       }
     }
     
@@ -438,6 +541,7 @@
         setupOrdersListener();
       } else {
         updateDebug("Cannot setup listeners - Firebase not initialized");
+        updateConnectionStatus(false);
       }
     });
   </script>
