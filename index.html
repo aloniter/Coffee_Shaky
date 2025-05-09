@@ -4,14 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Coffee Shaky</title>
-  <!-- Google Font for a fancier look -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
   <style>
-    /* Global Styles */
     body {
       margin: 0;
       padding: 0;
-      /* Coffee background image - ensure coffee-bg.png is in the same directory */
       background: url('coffee-bg.png') no-repeat center center fixed;
       background-size: cover;
       font-family: 'Montserrat', sans-serif;
@@ -20,7 +17,7 @@
     .container {
       max-width: 800px;
       margin: 30px auto;
-      background: rgba(255, 255, 255, 0.95); /* slight transparency for readability */
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 12px;
       box-shadow: 0 6px 15px rgba(0,0,0,0.1);
       padding: 30px;
@@ -32,7 +29,6 @@
       color: #6f4e37;
       text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
     }
-    /* Coffee Card Grid */
     .coffee-options {
       display: flex;
       flex-wrap: wrap;
@@ -57,157 +53,22 @@
     .coffee-card.selected {
       border-color: #6f4e37;
     }
-    .coffee-icon {
-      font-size: 50px;
-      margin-bottom: 10px;
-    }
-    /* Default icon size for other beverages */
-    .coffee-icon img {
-      width: 50px;
-      height: 50px;
-      display: block;
-      margin: 0 auto;
-    }
-    /* Make Espresso icon larger */
-    .coffee-card[data-coffee="Espresso"] .coffee-icon img {
-      width: 70px;
-      height: 70px;
-    }
     .coffee-card p {
       margin: 0;
       font-weight: 500;
       font-size: 1.1em;
     }
-    /* Order Form */
-    form {
-      margin-bottom: 20px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-    input[type="text"],
-    textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 1em;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #6f4e37;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 1.2em;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background: #5a3e2b;
-    }
-    /* Action buttons */
-    .action-button {
-      width: auto;
-      padding: 8px 16px;
-      margin: 10px 5px;
-      background: #6f4e37;
-      display: inline-block;
-    }
-    .delete-button {
-      background: #b71c1c;
-    }
-    .delete-button:hover {
-      background: #d32f2f;
-    }
-    #orderStatus {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 1.1em;
-    }
-    /* Queue Styles */
-    h2 {
-      text-align: center;
-      margin-top: 30px;
-      font-size: 1.8em;
-      color: #6f4e37;
-    }
-    .queue-controls {
-      text-align: center;
-      margin-top: 15px;
-    }
-    #orderQueue {
-      list-style-type: none;
-      padding: 0;
-      max-height: 250px;
-      overflow-y: auto;
-      border-top: 1px solid #ddd;
-      margin-top: 15px;
-    }
     #orderQueue li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       padding: 10px;
       border-bottom: 1px solid #eee;
       font-size: 1em;
     }
-    .order-status {
-      display: inline-block;
-      padding: 3px 6px;
-      border-radius: 3px;
-      font-size: 0.8em;
-      margin-left: 5px;
-      background: #ffebee;
-      color: #c62828;
-    }
-    .order-status.completed {
-      background: #e8f5e9;
-      color: #2e7d32;
-    }
-    /* Status indicator for connection */
-    .connection-status {
-      text-align: center;
-      margin-top: 5px;
-      font-size: 0.8em;
-      color: #999;
-    }
-    .connection-status.online {
-      color: #2e7d32;
-    }
-    .connection-status.offline {
-      color: #c62828;
-    }
-    /* Responsive Design for iPhones and smaller screens */
-    @media (max-width: 600px) {
-      .container {
-        margin: 15px;
-        padding: 20px;
-      }
-      h1 {
-        font-size: 2em;
-      }
-      .coffee-card {
-        width: 45%;
-        padding: 10px;
-      }
-      .coffee-icon {
-        font-size: 40px;
-      }
-      .coffee-card p {
-        font-size: 1em;
-      }
-      button {
-        font-size: 1em;
-        padding: 10px;
-      }
+    #orderQueue li.completed {
+      text-decoration: line-through;
+      color: #888;
     }
   </style>
 </head>
@@ -215,335 +76,112 @@
   <div class="container">
     <h1>Coffee Shaky</h1>
     
-    <!-- Beverage Options -->
     <div class="coffee-options">
       <div class="coffee-card" data-coffee="Espresso">
-        <div class="coffee-icon">
-          <img src="espresso.png" alt="Espresso Icon" />
-        </div>
         <p>Espresso</p>
       </div>
       <div class="coffee-card" data-coffee="Macchiato">
-        <div class="coffee-icon">☕</div>
         <p>Macchiato</p>
       </div>
       <div class="coffee-card" data-coffee="Cappuccino">
-        <div class="coffee-icon">☕</div>
         <p>Cappuccino</p>
       </div>
       <div class="coffee-card" data-coffee="Americano">
-        <div class="coffee-icon">☕</div>
         <p>Americano</p>
       </div>
       <div class="coffee-card" data-coffee="Tea">
-        <div class="coffee-icon">🍵</div>
         <p>Tea</p>
       </div>
     </div>
     
-    <!-- Order Form -->
     <form id="orderForm">
-      <div class="form-group">
-        <label for="userName">Your Name:</label>
-        <input type="text" id="userName" placeholder="Enter your name" required>
-      </div>
-      <div class="form-group">
-        <label for="specialRequest">Special Request (optional):</label>
-        <textarea id="specialRequest" placeholder="Any special instructions..."></textarea>
-      </div>
+      <input type="text" id="userName" placeholder="Enter your name" required>
       <button type="submit">Place Order</button>
     </form>
-    <div id="orderStatus"></div>
-    <div id="connectionStatus" class="connection-status">Connecting...</div>
     
-    <!-- Order Queue -->
     <h2>Orders Queue</h2>
     <div class="queue-controls">
       <button id="deleteOrdersBtn" class="action-button delete-button">Delete Orders</button>
-      <button id="refreshOrdersBtn" class="action-button">Refresh Orders</button>
     </div>
     <ul id="orderQueue"></ul>
-    
-    <!-- Debug status for development - can be removed for production -->
-    <div id="debugStatus" style="margin-top: 20px; color: #999; font-size: 0.8em; display: none;"></div>
   </div>
 
-  <!-- Updated Firebase SDK -->
   <script type="module">
-    // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-    import { 
-      getFirestore, 
-      collection, 
-      addDoc, 
-      getDocs, 
-      doc, 
-      deleteDoc, 
-      onSnapshot, 
-      query, 
-      orderBy, 
-      serverTimestamp,
-      writeBatch,
-      where
-    } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
-    
-    // Debug helper function
-    function updateDebug(message) {
-      const debugElement = document.getElementById('debugStatus');
-      const timestamp = new Date().toLocaleTimeString();
-      debugElement.innerHTML += `<div>${timestamp}: ${message}</div>`;
-      console.log(`${timestamp}: ${message}`); // Also log to console
-    }
-    
-    updateDebug("Script started");
-    
-    // Your web app's Firebase configuration
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+
     const firebaseConfig = {
-      apiKey: "AIzaSyCVAN11EFH0bSP3GefRvICHyWKMto0-5mc",
-      authDomain: "coffee-shaky.firebaseapp.com",
-      projectId: "coffee-shaky",
-      storageBucket: "coffee-shaky.appspot.com",
-      messagingSenderId: "319501505593",
-      appId: "1:319501505593:web:918b539e4b5cca36b4a9e8"
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+      projectId: "YOUR_FIREBASE_PROJECT_ID",
+      storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+      appId: "YOUR_FIREBASE_APP_ID"
     };
-    
-    // Initialize Firebase with error handling
-    let app, db;
-    try {
-      updateDebug("Initializing Firebase");
-      app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      updateDebug("Firebase initialized successfully");
-      updateConnectionStatus(true);
-    } catch (error) {
-      console.error("Firebase initialization error:", error);
-      updateDebug(`Firebase initialization error: ${error.message}`);
-      document.getElementById('orderStatus').textContent = "Unable to connect to the order system. Please try again later.";
-      updateConnectionStatus(false);
-    }
-    
-    // Update connection status indicator
-    function updateConnectionStatus(isConnected) {
-      const statusElement = document.getElementById('connectionStatus');
-      if (isConnected) {
-        statusElement.textContent = "Connected to server";
-        statusElement.className = "connection-status online";
-      } else {
-        statusElement.textContent = "Disconnected from server";
-        statusElement.className = "connection-status offline";
-      }
-    }
-    
-    // DOM references
-    const coffeeCards = document.querySelectorAll('.coffee-card');
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const orderForm = document.getElementById('orderForm');
-    const orderStatus = document.getElementById('orderStatus');
     const orderQueue = document.getElementById('orderQueue');
     const deleteOrdersBtn = document.getElementById('deleteOrdersBtn');
-    const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
-    
-    // Track selected coffee
     let selectedCoffee = null;
-    
-    // Setup coffee card selection
-    coffeeCards.forEach(card => {
+
+    document.querySelectorAll('.coffee-card').forEach(card => {
       card.addEventListener('click', () => {
-        coffeeCards.forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
         selectedCoffee = card.getAttribute('data-coffee');
-        updateDebug(`Selected coffee: ${selectedCoffee}`);
+        document.querySelectorAll('.coffee-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
       });
     });
-    
-    // Order form handling
+
     orderForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const nameInput = document.getElementById('userName');
-      const specialRequestInput = document.getElementById('specialRequest');
-      
-      const name = nameInput.value.trim();
-      if (!name) {
-        orderStatus.textContent = 'Please enter your name.';
-        return;
-      }
-      if (!selectedCoffee) {
-        orderStatus.textContent = 'Please select a beverage.';
-        return;
-      }
-      
-      const specialRequest = specialRequestInput.value.trim();
-      
-      try {
-        orderStatus.textContent = 'Processing your order...';
-        updateDebug(`Submitting order: ${name}, ${selectedCoffee}`);
-        
-        // Create order object
-        const order = {
-          name: name,
-          beverage: selectedCoffee,
-          specialRequest: specialRequest,
-          timestamp: serverTimestamp(),
-          status: 'pending',
-          deviceId: generateDeviceId() // Add device identifier
-        };
-        
-        // Add order to Firestore
-        const docRef = await addDoc(collection(db, "orders"), order);
-        updateDebug(`Order added with ID: ${docRef.id}`);
-        
-        orderStatus.textContent = 'Order placed successfully!';
-        
-        // Reset form
-        nameInput.value = '';
-        specialRequestInput.value = '';
-        selectedCoffee = null;
-        coffeeCards.forEach(card => card.classList.remove('selected'));
-        
-      } catch (error) {
-        console.error("Error adding order: ", error);
-        updateDebug(`Error adding order: ${error.message}`);
-        orderStatus.textContent = 'Error placing your order. Please try again.';
-        updateConnectionStatus(false);
-      }
+      const name = document.getElementById('userName').value.trim();
+      if (!selectedCoffee) return alert('Please select a coffee.');
+
+      await addDoc(collection(db, "orders"), {
+        name,
+        beverage: selectedCoffee,
+        status: "pending"
+      });
+      document.getElementById('userName').value = '';
+      selectedCoffee = null;
     });
-    
-    // Generate a simple device identifier
-    function generateDeviceId() {
-      let deviceId = localStorage.getItem('coffeeShaky_deviceId');
-      if (!deviceId) {
-        deviceId = 'device_' + Math.random().toString(36).substring(2, 10);
-        localStorage.setItem('coffeeShaky_deviceId', deviceId);
-      }
-      return deviceId;
-    }
-    
-    // Delete all orders
+
     deleteOrdersBtn.addEventListener('click', async () => {
-      if (confirm('Are you sure you want to delete ALL orders?')) {
-        try {
-          updateDebug("Deleting all orders");
-          orderStatus.textContent = 'Deleting all orders...';
-          
-          // Get all orders
-          const ordersSnapshot = await getDocs(collection(db, "orders"));
-          
-          // Use a batch to delete multiple documents
-          const batch = writeBatch(db);
-          ordersSnapshot.forEach((doc) => {
-            batch.delete(doc.ref);
-          });
-          
-          // Commit the batch
-          await batch.commit();
-          
-          updateDebug(`Deleted ${ordersSnapshot.size} orders`);
-          orderStatus.textContent = `Deleted ${ordersSnapshot.size} orders.`;
-          
-        } catch (error) {
-          console.error("Error deleting orders:", error);
-          updateDebug(`Error deleting orders: ${error.message}`);
-          orderStatus.textContent = 'Error deleting orders. Please try again.';
-          updateConnectionStatus(false);
-        }
-      }
-    });
-    
-    // Refresh orders manually
-    refreshOrdersBtn.addEventListener('click', async () => {
-      try {
-        updateDebug("Manually refreshing orders");
-        orderStatus.textContent = 'Refreshing orders...';
-        
-        // Force a refresh by getting all orders
-        const ordersSnapshot = await getDocs(query(
-          collection(db, "orders"), 
-          orderBy("timestamp", "desc")
-        ));
-        
-        // Update the UI
-        updateOrdersUI(ordersSnapshot);
-        
-        orderStatus.textContent = `Orders refreshed. Found ${ordersSnapshot.size} orders.`;
-        updateConnectionStatus(true);
-        
-      } catch (error) {
-        console.error("Error refreshing orders:", error);
-        updateDebug(`Error refreshing orders: ${error.message}`);
-        orderStatus.textContent = 'Error refreshing orders. Please try again.';
-        updateConnectionStatus(false);
-      }
-    });
-    
-    // Update the UI with orders
-    function updateOrdersUI(snapshot) {
-      orderQueue.innerHTML = '';
-      
-      if (snapshot.empty) {
-        const emptyMessage = document.createElement('li');
-        emptyMessage.textContent = 'No orders in queue';
-        orderQueue.appendChild(emptyMessage);
+      const code = prompt("Enter delete code:");
+      if (code !== "1707") {
+        alert("Incorrect code.");
         return;
       }
-      
+
+      const ordersSnapshot = await getDocs(collection(db, "orders"));
+      ordersSnapshot.forEach(async (order) => {
+        await deleteDoc(doc(db, "orders", order.id));
+      });
+      alert("All orders deleted.");
+    });
+
+    onSnapshot(query(collection(db, "orders"), orderBy("name")), (snapshot) => {
+      orderQueue.innerHTML = '';
       snapshot.forEach((doc) => {
         const order = doc.data();
         const li = document.createElement('li');
-        
-        // Format timestamp
-        let timeString = 'Just now';
-        if (order.timestamp) {
-          const orderTime = order.timestamp.toDate();
-          timeString = orderTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-        
-        li.textContent = `${timeString} - ${order.name}: ${order.beverage}` +
-                      (order.specialRequest ? ` (Special: ${order.specialRequest})` : '');
-        
-        // Add status indicator
-        const statusSpan = document.createElement('span');
-        statusSpan.className = `order-status ${order.status === 'completed' ? 'completed' : ''}`;
-        statusSpan.textContent = order.status === 'completed' ? 'Ready' : 'Preparing';
-        li.appendChild(statusSpan);
-        
+        li.innerHTML = `
+          ${order.name}: ${order.beverage} 
+          <input type="checkbox" onclick="toggleOrderStatus('${doc.id}', this)" />
+        `;
+        if (order.status === 'completed') li.classList.add('completed');
         orderQueue.appendChild(li);
       });
-    }
-    
-    // Listen for orders and display them
-    function setupOrdersListener() {
-      try {
-        updateDebug("Setting up orders listener");
-        const ordersQuery = query(collection(db, "orders"), orderBy("timestamp", "desc"));
-        
-        onSnapshot(ordersQuery, (snapshot) => {
-          updateDebug(`Received ${snapshot.size} orders from database`);
-          updateOrdersUI(snapshot);
-          updateConnectionStatus(true);
-        }, (error) => {
-          console.error("Error getting orders: ", error);
-          updateDebug(`Error in orders listener: ${error.message}`);
-          orderQueue.innerHTML = '<li>Error loading orders. Please try refreshing.</li>';
-          updateConnectionStatus(false);
-        });
-        
-        updateDebug("Orders listener setup complete");
-      } catch (error) {
-        console.error("Error setting up orders listener: ", error);
-        updateDebug(`Failed to setup orders listener: ${error.message}`);
-        updateConnectionStatus(false);
-      }
-    }
-    
-    // Start the real-time listeners when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      updateDebug("DOM content loaded");
-      if (db) {
-        setupOrdersListener();
-      } else {
-        updateDebug("Cannot setup listeners - Firebase not initialized");
-        updateConnectionStatus(false);
-      }
     });
+
+    window.toggleOrderStatus = async (id, checkbox) => {
+      const orderDoc = doc(db, "orders", id);
+      const newStatus = checkbox.checked ? 'completed' : 'pending';
+      await updateDoc(orderDoc, { status: newStatus });
+    };
   </script>
 </body>
 </html>
