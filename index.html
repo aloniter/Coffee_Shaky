@@ -139,7 +139,7 @@
       if(o.status==="completed") li.classList.add("completed");
       const span=document.createElement("span");
       span.className="order-info";
-      const time=new Date(o.timestamp||Date.now())
+      const time=new Date(o.created_at || Date.now())
         .toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
       span.textContent=`${time} – ${o.name}: ${o.beverage}${o.special_request?` (בקשה: ${o.special_request})`:""}`;
       li.appendChild(span);
@@ -153,13 +153,23 @@
 
   /* ===== 7. טעינה ראשונית + Realtime ===== */
   async function refresh(){
-    const {data,error}=await sb.from("orders").select("*").order("timestamp",{ascending:false});
-    if(!error) render(data);
+    const {data, error} = await sb
+      .from("orders")
+      .select("*")
+      .order("id", { ascending: false });   // מיון לפי id יורד
+
+    if(error){
+      console.error("Supabase read error:", error.message);
+      return;
+    }
+    render(data);
   }
   refresh();
 
   sb.channel("orders_stream")
-    .on("postgres_changes",{event:"*",schema:"public",table:"orders"},refresh)
+    .on("postgres_changes",
+        {event:"*",schema:"public",table:"orders"},
+        () => refresh())
     .subscribe();
   </script>
 
