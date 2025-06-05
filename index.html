@@ -1,184 +1,161 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Coffee Shaky</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coffee Shaky</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Supabase client v2 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
-    .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
-    h1{text-align:center;color:#6f4e37;margin-top:0}
-    /* --- beverage selector --- */
-    .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
-    .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
-    .coffee-card:hover{transform:translateY(-5px)}
-    .coffee-card.selected{border-color:#6f4e37}
-    .coffee-icon img{width:55px;height:55px;display:block;margin:0 auto 8px}
-    /* --- form & queue --- */
-    .form-group{margin-bottom:15px}
-    input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
-    textarea{resize:vertical;min-height:60px}
-    button{padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:6px;font-size:1.1em;cursor:pointer;width:100%}
-    button:hover{background:#5a3e2b}
-    ul{list-style:none;padding:0;margin:15px 0 0}
-    li{display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}
-    li.completed{text-decoration:line-through;color:#999}
-    .order-info{flex:1}
-    .order-check{margin-left:10px;width:20px;height:20px;cursor:pointer}
-    .admin-btn{margin:5px;padding:6px 12px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer}
-  </style>
+<style>
+body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
+.container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
+h1{text-align:center;color:#6f4e37;margin-top:0}
+.coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
+.coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
+.coffee-card:hover{transform:translateY(-5px)}
+.coffee-card.selected{border-color:#6f4e37}
+.coffee-icon img{width:55px;height:55px;display:block;margin:0 auto 8px}
+.form-group{margin-bottom:15px}
+input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
+textarea{resize:vertical;min-height:60px}
+button{padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:6px;font-size:1.1em;cursor:pointer;width:100%}
+button:hover{background:#5a3e2b}
+ul{list-style:none;padding:0;margin:15px 0 0}
+li{display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}
+li.completed{text-decoration:line-through;color:#999}
+.order-info{flex:1}
+.order-check{margin-left:10px;width:20px;height:20px;cursor:pointer}
+.admin-btn{margin:5px;padding:6px 12px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Coffee Shaky ☕</h1>
+<div class="container">
+  <h1>Coffee Shaky ☕</h1>
 
-    <!-- beverage selector -->
-    <div class="coffee-options">
-      <div class="coffee-card" data-coffee="Espresso">
-        <div class="coffee-icon"><img src="espresso.png" alt="Espresso"></div>
-        אספרסו
-      </div>
-      <div class="coffee-card" data-coffee="Macchiato">
-        <div class="coffee-icon"><img src="macchiato.png" alt="Macchiato"></div>
-        מקיאטו
-      </div>
-      <div class="coffee-card" data-coffee="Cappuccino">
-        <div class="coffee-icon"><img src="cappuccino.png" alt="Cappuccino"></div>
-        קפוצ'ינו
-      </div>
-      <div class="coffee-card" data-coffee="Americano">
-        <div class="coffee-icon"><img src="americano.png" alt="Americano"></div>
-        אמריקנו
-      </div>
-      <div class="coffee-card" data-coffee="Tea">
-        <div class="coffee-icon"><img src="tea.png" alt="Tea"></div>
-        תה
-      </div>
+  <!-- בחירת משקה -->
+  <div class="coffee-options">
+    <div class="coffee-card" data-coffee="Espresso">
+      <div class="coffee-icon"><img src="espresso.png" alt="Espresso"></div>אספרסו
     </div>
-
-    <!-- order form -->
-    <form id="orderForm">
-      <div class="form-group">
-        <label for="userName">שם:</label>
-        <input id="userName" required>
-      </div>
-      <div class="form-group">
-        <label for="specialRequest">בקשה מיוחדת (לא חובה):</label>
-        <textarea id="specialRequest"></textarea>
-      </div>
-      <button type="submit">הזמן משקה</button>
-    </form>
-
-    <!-- queue -->
-    <h2>תור ההזמנות</h2>
-    <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
-    <ul id="orderQueue"><li>טוען…</li></ul>
+    <div class="coffee-card" data-coffee="Macchiato">
+      <div class="coffee-icon"><img src="macchiato.png" alt="Macchiato"></div>מקיאטו
+    </div>
+    <div class="coffee-card" data-coffee="Cappuccino">
+      <div class="coffee-icon"><img src="cappuccino.png" alt="Cappuccino"></div>קפוצ'ינו
+    </div>
+    <div class="coffee-card" data-coffee="Americano">
+      <div class="coffee-icon"><img src="americano.png" alt="Americano"></div>אמריקנו
+    </div>
+    <div class="coffee-card" data-coffee="Tea">
+      <div class="coffee-icon"><img src="tea.png" alt="Tea"></div>תה
+    </div>
   </div>
 
+  <!-- טופס -->
+  <form id="orderForm">
+    <div class="form-group">
+      <label for="userName">שם:</label>
+      <input id="userName" required>
+    </div>
+    <div class="form-group">
+      <label for="specialRequest">בקשה מיוחדת (לא חובה):</label>
+      <textarea id="specialRequest"></textarea>
+    </div>
+    <button type="submit">הזמן משקה</button>
+  </form>
+
+  <!-- תור הזמנות -->
+  <h2>תור ההזמנות</h2>
+  <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
+  <ul id="orderQueue"><li>טוען…</li></ul>
+</div>
+
 <script type="module">
-/* ---------- 1.  Supabase connection ---------- */
+/* ---- 1. חיבור ל-Supabase ---- */
 const supabase = supabase.createClient(
   "https://txnorybrbgmwzoibrode.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6Ikp..."
 );
 
-/* ---------- 2.  DOM refs ---------- */
+/* ---- 2. DOM ---- */
 const form        = document.getElementById("orderForm");
 const orderQueue  = document.getElementById("orderQueue");
 const deleteAll   = document.getElementById("deleteAll");
 const cards       = document.querySelectorAll(".coffee-card");
 let   selectedCoffee = null;
 
-/* ---------- 3.  UI events ---------- */
-cards.forEach(card => {
-  card.addEventListener("click", () => {
-    cards.forEach(c => c.classList.remove("selected"));
+/* ---- 3. בחירת משקה ---- */
+cards.forEach(card=>{
+  card.addEventListener("click",()=>{
+    cards.forEach(c=>c.classList.remove("selected"));
     card.classList.add("selected");
     selectedCoffee = card.dataset.coffee;
   });
 });
 
-form.addEventListener("submit", async e => {
+/* ---- 4. שליחת הזמנה ---- */
+form.addEventListener("submit", async e=>{
   e.preventDefault();
   const name = document.getElementById("userName").value.trim();
   const note = document.getElementById("specialRequest").value.trim();
-  if (!name || !selectedCoffee) { alert("יש להזין שם ולבחור משקה"); return; }
+  if(!name||!selectedCoffee){alert("יש להזין שם ולבחור משקה");return;}
 
-  const { error } = await supabase.from("orders").insert({
-    name, beverage: selectedCoffee, special_request: note, status: "pending"
-  });
-  if (error) { alert("שגיאה בשליחת ההזמנה"); console.error(error); return; }
+  const {error} = await supabase.from("orders")
+    .insert([{name, beverage:selectedCoffee, special_request:note, status:"pending"}])
+    .select();     // מחזיר את השורה ש-INSERT-נו (ומפעיל default timestamp)
 
-  form.reset();
-  cards.forEach(c => c.classList.remove("selected"));
-  selectedCoffee = null;
+  if(error){alert("שגיאה בשליחת ההזמנה");console.error(error);return;}
+
+  form.reset(); cards.forEach(c=>c.classList.remove("selected")); selectedCoffee=null;
+  refresh();     // ריענון מיידי (מעלRealtime ליתר בטחון)
 });
 
-/* admin: delete all (hidden code) */
-deleteAll.addEventListener("click", async () => {
-  const code = prompt("הכנס/י קוד מחיקה");
-  if (code !== "1707") return;
-  const { error } = await supabase.from("orders").delete().neq("id", 0);
-  if (error) alert("שגיאה"); else alert("כל ההזמנות נמחקו");
+/* ---- 5. מחיקת הכל (קוד מוסתר) ---- */
+deleteAll.addEventListener("click", async()=>{
+  if(prompt("קוד מחיקה")!=="1707") return;
+  const {error}=await supabase.from("orders").delete().neq("id",0);
+  if(error) alert("שגיאה"); else alert("כל ההזמנות נמחקו");
 });
 
-/* ---------- 4.  Rendering ---------- */
-function render(orders = []) {
-  orderQueue.innerHTML = "";
-  if (!orders.length) { orderQueue.innerHTML = "<li>אין הזמנות</li>"; return; }
+/* ---- 6. רינדור תור ---- */
+function render(list=[]){
+  orderQueue.innerHTML="";
+  if(!list.length){orderQueue.innerHTML="<li>אין הזמנות</li>";return;}
+  list.forEach(o=>{
+    const li=document.createElement("li");
+    if(o.status==="completed") li.classList.add("completed");
 
-  orders.forEach(o => {
-    const li = document.createElement("li");
-    if (o.status === "completed") li.classList.add("completed");
-
-    const info = document.createElement("span");
-    info.className = "order-info";
-    const time = new Date(o.timestamp || Date.now())
-                   .toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
-    info.textContent = `${time} – ${o.name}: ${o.beverage}` +
-      (o.special_request ? ` (בקשה: ${o.special_request})` : "");
+    const info=document.createElement("span");
+    info.className="order-info";
+    const time=new Date(o.timestamp||Date.now())
+      .toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
+    info.textContent=`${time} – ${o.name}: ${o.beverage}${
+      o.special_request?` (בקשה: ${o.special_request})`:""}`;
     li.appendChild(info);
 
-    const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.className = "order-check";
-    cb.checked = o.status === "completed";
-    cb.addEventListener("change", () =>
-      supabase.from("orders")
-              .update({ status: cb.checked ? "completed" : "pending" })
-              .eq("id", o.id)
-    );
+    const cb=document.createElement("input");
+    cb.type="checkbox"; cb.className="order-check";
+    cb.checked=o.status==="completed";
+    cb.addEventListener("change",()=>supabase.from("orders")
+      .update({status:cb.checked?"completed":"pending"}).eq("id",o.id));
     li.appendChild(cb);
 
     orderQueue.appendChild(li);
   });
 }
 
-/* ---------- 5.  Initial fetch ---------- */
-(async () => {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*")
-    .order("timestamp", { ascending: false });
-  if (!error) render(data);
-})();
-
-/* ---------- 6.  Real-time listener ---------- */
-supabase.channel("orders_stream")
-  .on("postgres_changes", { event: "*", schema: "public", table: "orders" },
-    () => refresh())
-  .subscribe();
-
-async function refresh() {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*")
-    .order("timestamp", { ascending: false });
-  if (!error) render(data);
+/* ---- 7. טעינה ראשונית ---- */
+async function refresh(){
+  const {data,error}=await supabase.from("orders")
+    .select("*").order("timestamp",{ascending:false});
+  if(!error) render(data);
 }
+refresh();
+
+/* ---- 8. Realtime ---- */
+supabase.channel("orders_stream")
+  .on("postgres_changes",{event:"*",schema:"public",table:"orders"},()=>refresh())
+  .subscribe();
 </script>
 </body>
 </html>
