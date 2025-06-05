@@ -1,254 +1,165 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Coffee Shaky</title>
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&display=swap" rel="stylesheet">
+  <!-- Supabase client v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-  /* --------------  CSS (unchanged except typo fixes) -------------- */
-  body{margin:0;padding:0;direction:rtl;
-       background:url('coffee-bg.png') no-repeat center/cover fixed;
-       font-family:'Montserrat',sans-serif;color:#4e342e}
-  .container{max-width:800px;margin:30px auto;
-      background:rgba(255,255,255,.95);border-radius:12px;
-      box-shadow:0 6px 15px rgba(0,0,0,.1);padding:30px}
-  h1{text-align:center;font-size:3em;margin-bottom:20px;color:#6f4e37;
-      text-shadow:1px 1px 3px rgba(0,0,0,.1)}
-  .coffee-options{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;margin-bottom:30px}
-  .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;
-      width:150px;text-align:center;cursor:pointer;padding:15px;
-      transition:transform .3s,border-color .3s;
-      box-shadow:0 4px 8px rgba(0,0,0,.08)}
-  .coffee-card:hover{transform:translateY(-5px)}
-  .coffee-card.selected{border-color:#6f4e37}
-  .coffee-icon img{width:50px;height:50px;display:block;margin:0 auto}
-  .coffee-card[data-coffee="Espresso"] .coffee-icon img{width:70px;height:70px}
-  .coffee-card p{margin:0;font-weight:500;font-size:1.1em}
-  form{margin-bottom:20px}.form-group{margin-bottom:15px}
-  label{display:block;margin-bottom:8px;font-weight:500}
-  input[type="text"],textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:5px;font-size:1em}
-  textarea{resize:vertical;min-height:60px}
-  button{width:100%;padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:5px;font-size:1.2em;cursor:pointer;transition:background .3s}
-  button:hover{background:#5a3e2b}
-  .action-button{width:auto;padding:8px 16px;margin:10px 5px;background:#6f4e37;color:#fff;border:none;border-radius:5px;cursor:pointer}
-  .delete-button{background:#b71c1c}.delete-button:hover{background:#d32f2f}
-  h2{text-align:center;margin-top:30px;font-size:1.8em;color:#6f4e37}
-  #orderQueue{list-style:none;padding:0;max-height:260px;overflow-y:auto;border-top:1px solid #ddd;margin-top:15px}
-  #orderQueue li{display:flex;align-items:center;justify-content:space-between;
-      padding:10px;border-bottom:1px solid #eee;font-size:1em}
-  #orderQueue li.completed{text-decoration:line-through;color:#888}
-  .order-info{flex:1}.order-check{margin-left:10px;width:22px;height:22px;cursor:pointer}
-  .connection-status{text-align:center;margin-top:5px;font-size:.8em;color:#999}
-  .connection-status.online{color:#2e7d32}.connection-status.offline{color:#c62828}
-  @media(max-width:600px){
-    .container{margin:15px;padding:20px}
-    h1{font-size:2em}.coffee-card{width:45%;padding:10px}
-    button{font-size:1em;padding:10px}
-  }
+    body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
+    .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
+    h1{text-align:center;color:#6f4e37;margin-top:0}
+    .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
+    .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
+    .coffee-card:hover{transform:translateY(-5px)}
+    .coffee-card.selected{border-color:#6f4e37}
+    .form-group{margin-bottom:15px}
+    input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
+    textarea{resize:vertical;min-height:60px}
+    button{padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:6px;font-size:1.1em;cursor:pointer;width:100%}
+    button:hover{background:#5a3e2b}
+    ul{list-style:none;padding:0;margin:15px 0 0}
+    li{display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}
+    li.completed{text-decoration:line-through;color:#999}
+    .order-info{flex:1}
+    .order-check{margin-left:10px;width:20px;height:20px;cursor:pointer}
+    .admin-btn{margin:5px;padding:6px 12px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer}
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Coffee&nbsp;Shaky</h1>
+    <h1>Coffee Shaky ☕</h1>
 
-    <!-- בחירת משקה -->
+    <!-- beverage selector -->
     <div class="coffee-options">
-      <div class="coffee-card" data-coffee="Espresso">
-        <div class="coffee-icon"><img src="espresso.png" alt="Espresso"></div><p>אספרסו</p>
-      </div>
-      <div class="coffee-card" data-coffee="Macchiato">
-        <div class="coffee-icon">☕️</div><p>מקיאטו</p>
-      </div>
-      <div class="coffee-card" data-coffee="Cappuccino">
-        <div class="coffee-icon">☕️</div><p>קפוצ'ינו</p>
-      </div>
-      <div class="coffee-card" data-coffee="Americano">
-        <div class="coffee-icon">☕️</div><p>אמריקנו</p>
-      </div>
-      <div class="coffee-card" data-coffee="Tea">
-        <div class="coffee-icon">🍵</div><p>תה</p>
-      </div>
+      <div class="coffee-card" data-coffee="Espresso">אספרסו</div>
+      <div class="coffee-card" data-coffee="Macchiato">מקיאטו</div>
+      <div class="coffee-card" data-coffee="Cappuccino">קפוצ'ינו</div>
+      <div class="coffee-card" data-coffee="Americano">אמריקנו</div>
+      <div class="coffee-card" data-coffee="Tea">תה</div>
     </div>
 
-    <!-- טופס הזמנה -->
+    <!-- order form -->
     <form id="orderForm">
       <div class="form-group">
-        <label for="userName">שם פרטי:</label>
-        <input type="text" id="userName" placeholder="הקלד/י את שמך" required />
+        <label for="userName">שם:</label>
+        <input id="userName" required>
       </div>
       <div class="form-group">
         <label for="specialRequest">בקשה מיוחדת (לא חובה):</label>
-        <textarea id="specialRequest" placeholder="הוראות מיוחדות…"></textarea>
+        <textarea id="specialRequest"></textarea>
       </div>
-      <button type="submit">הזמנת משקה</button>
+      <button type="submit">הזמן משקה</button>
     </form>
-    <div id="orderStatus"></div>
-    <div id="connectionStatus" class="connection-status">מתחבר…</div>
 
-    <!-- רשימת הזמנות -->
+    <!-- queue -->
     <h2>תור ההזמנות</h2>
-    <div class="queue-controls">
-      <button id="deleteOrdersBtn" class="action-button delete-button">מחק את כל ההזמנות</button>
-      <button id="refreshOrdersBtn" class="action-button">רענן</button>
-    </div>
-    <ul id="orderQueue"></ul>
+    <button id="deleteAll" class="admin-btn">מחק את כל ההזמנות (קוד 1707)</button>
+    <ul id="orderQueue"><li>טוען…</li></ul>
   </div>
 
-  <!-- ------------- JS ------------- -->
-  <script type="module">
-    /* ---- Firebase modular SDK v11 (31 May 2025) ---- */
-    import { initializeApp }   from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import {
-      getFirestore, collection, addDoc, getDocs, query, orderBy,
-      onSnapshot, serverTimestamp, writeBatch, updateDoc, doc
-    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+<script type="module">
+/* ---------- 1.  Supabase connection ---------- */
+const supabase = supabase.createClient(
+  "https://txnorybrbgmwzoibrode.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
+);
 
-    /* ---- Your project keys (DON’T expose sensitive keys anywhere else) ---- */
-    const firebaseConfig = {
-      apiKey:             "AIzaSyCVAN11EFH0bSP3GefRvICHyWKMto0-5mc",
-      authDomain:         "coffee-shaky.firebaseapp.com",
-      projectId:          "coffee-shaky",
-      storageBucket:      "coffee-shaky.appspot.com",
-      messagingSenderId:  "319501505593",
-      appId:              "1:319501505593:web:918b539e4b5cca36b4a9e8"
-    };
+/* ---------- 2.  DOM refs ---------- */
+const form        = document.getElementById("orderForm");
+const orderQueue  = document.getElementById("orderQueue");
+const deleteAll   = document.getElementById("deleteAll");
+const cards       = document.querySelectorAll(".coffee-card");
 
-    /* ---- Init ---- */
-    let db;
-    try {
-      const app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      updateConnectionStatus(true);
-    } catch (err) {
-      console.error(err);
-      document.getElementById("orderStatus").textContent = "שגיאה בחיבור ל-שרת";
-      updateConnectionStatus(false);
-    }
+let selectedCoffee = null;
 
-    /* ---- Beverage names (EN→HE) ---- */
-    const beverageNames = {
-      Espresso   : "אספרסו",
-      Macchiato  : "מקיאטו",
-      Cappuccino : "קפוצ'ינו",
-      Americano  : "אמריקנו",
-      Tea        : "תה"
-    };
+/* ---------- 3.  UI events ---------- */
+cards.forEach(card => {
+  card.addEventListener("click", () => {
+    cards.forEach(c => c.classList.remove("selected"));
+    card.classList.add("selected");
+    selectedCoffee = card.dataset.coffee;
+  });
+});
 
-    /* ---- DOM refs ---- */
-    const coffeeCards      = document.querySelectorAll(".coffee-card");
-    const orderForm        = document.getElementById("orderForm");
-    const orderStatus      = document.getElementById("orderStatus");
-    const orderQueue       = document.getElementById("orderQueue");
-    const deleteOrdersBtn  = document.getElementById("deleteOrdersBtn");
-    const refreshOrdersBtn = document.getElementById("refreshOrdersBtn");
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name   = document.getElementById("userName").value.trim();
+  const note   = document.getElementById("specialRequest").value.trim();
 
-    let selectedCoffee = null;
+  if (!name || !selectedCoffee) { alert("יש להזין שם ולבחור משקה"); return; }
 
-    coffeeCards.forEach(card => {
-      card.addEventListener("click", () => {
-        coffeeCards.forEach(c => c.classList.remove("selected"));
-        card.classList.add("selected");
-        selectedCoffee = card.dataset.coffee;
-      });
-    });
+  const { error } = await supabase.from("orders").insert({
+    name, beverage: selectedCoffee, special_request: note, status: "pending"
+  });
+  if (error) { alert("שגיאה בשליחת ההזמנה"); console.error(error); return; }
 
-    /* ---- Submit new order ---- */
-    orderForm.addEventListener("submit", async e => {
-      e.preventDefault();
-      const name = document.getElementById("userName").value.trim();
-      const specialRequest = document.getElementById("specialRequest").value.trim();
-      if (!name)           { orderStatus.textContent = "יש להזין שם";          return; }
-      if (!selectedCoffee) { orderStatus.textContent = "יש לבחור משקה";        return; }
+  form.reset(); cards.forEach(c => c.classList.remove("selected")); selectedCoffee = null;
+});
 
-      try {
-        await addDoc(collection(db, "orders"), {
-          name,
-          beverage:       selectedCoffee,       // stored in EN
-          specialRequest,
-          timestamp:      serverTimestamp(),
-          status:         "pending"
-        });
-        orderStatus.textContent = "✅ ההזמנה נקלטה!";
-        orderForm.reset();
-        selectedCoffee = null;
-        coffeeCards.forEach(c => c.classList.remove("selected"));
-      } catch (err) {
-        console.error(err);
-        orderStatus.textContent = "❌ שגיאה בהזמנה";
-        updateConnectionStatus(false);
-      }
-    });
+/* admin: delete all */
+deleteAll.addEventListener("click", async () => {
+  if (prompt("קוד מחיקה?") !== "1707") return;
+  const { error } = await supabase.from("orders").delete().neq("id", 0);
+  if (error) alert("Error"); else alert("נמחק");
+});
 
-    /* ---- Delete all orders (admin code: 1707) ---- */
-    deleteOrdersBtn.addEventListener("click", async () => {
-      const code = prompt("הכנס/י קוד מחיקה");
-      if (code !== "1707") { alert("קוד שגוי"); return; }
-      if (!confirm("בטוח/ה?")) return;
+/* ---------- 4.  Rendering ---------- */
+function render(orders=[]) {
+  orderQueue.innerHTML = "";
+  if (!orders.length) { orderQueue.innerHTML = "<li>אין הזמנות</li>"; return; }
 
-      try {
-        const snap  = await getDocs(collection(db, "orders"));
-        const batch = writeBatch(db);
-        snap.forEach(d => batch.delete(d.ref));
-        await batch.commit();
-        alert(`נמחקו ${snap.size} הזמנות`);
-      } catch (err) {
-        console.error(err);
-        alert("שגיאה במחיקה");
-      }
-    });
+  orders.forEach(o => {
+    const li = document.createElement("li");
+    if (o.status === "completed") li.classList.add("completed");
 
-    /* ---- Manual refresh ---- */
-    refreshOrdersBtn.addEventListener("click", async () => {
-      const snap = await getDocs(query(collection(db, "orders"), orderBy("timestamp", "desc")));
-      renderQueue(snap);
-    });
+    const info = document.createElement("span");
+    info.className = "order-info";
+    const time = new Date(o.timestamp || Date.now())
+                   .toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
+    info.textContent = `${time} – ${o.name}: ${o.beverage}` +
+                       (o.special_request ? ` (בקשה: ${o.special_request})` : "");
+    li.appendChild(info);
 
-    /* ---- Live listener ---- */
-    onSnapshot(
-      query(collection(db, "orders"), orderBy("timestamp", "desc")),
-      snap   => { renderQueue(snap); updateConnectionStatus(true); },
-      _error => { orderQueue.innerHTML = "<li>שגיאה בטעינת הנתונים</li>"; updateConnectionStatus(false); }
+    /* mark done checkbox */
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.className = "order-check"; cb.checked = o.status === "completed";
+    cb.addEventListener("change",() =>
+      supabase.from("orders")
+              .update({ status: cb.checked ? "completed":"pending" })
+              .eq("id", o.id)
     );
+    li.appendChild(cb);
 
-    /* ---- UI helpers ---- */
-    function renderQueue(snap) {
-      orderQueue.innerHTML = "";
-      if (snap.empty) {
-        orderQueue.innerHTML = "<li>אין הזמנות כרגע</li>";
-        return;
-      }
-      snap.forEach(d => {
-        const o  = d.data();
-        const li = document.createElement("li");
-        if (o.status === "completed") li.classList.add("completed");
+    orderQueue.appendChild(li);
+  });
+}
 
-        const info = document.createElement("span");
-        info.className = "order-info";
-        const time = o.timestamp ? o.timestamp.toDate().toLocaleTimeString("he-IL", {hour: "2-digit", minute: "2-digit"}) : "↺";
-        const coffee = beverageNames[o.beverage] || o.beverage;
-        info.textContent = `${time} – ${o.name}: ${coffee}${o.specialRequest ? " (בקשה: " + o.specialRequest + ")" : ""}`;
-        li.appendChild(info);
+/* ---------- 5.  Initial fetch ---------- */
+const { data: initial, error: initErr } =
+      await supabase.from("orders").select("*").order("timestamp",{ascending:false});
+if (initErr) console.error(initErr); else render(initial);
 
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.className = "order-check";
-        cb.checked = o.status === "completed";
-        cb.addEventListener("change", () => updateDoc(doc(db, "orders", d.id), { status: cb.checked ? "completed" : "pending" }));
-        li.appendChild(cb);
+/* ---------- 6.  Real-time listener ---------- */
+supabase.channel("public:orders")
+  .on("postgres_changes",
+      { event: "*", schema: "public", table: "orders" },
+      payload => {
+        // Simple strategy: refetch everything on any change
+        fetchLatest();
+      })
+  .subscribe();   //  [oai_citation:0‡supabase.com](https://supabase.com/docs/guides/realtime/subscribing-to-database-changes?utm_source=chatgpt.com)
 
-        orderQueue.appendChild(li);
-      });
-    }
-
-    function updateConnectionStatus(ok) {
-      const el = document.getElementById("connectionStatus");
-      el.textContent = ok ? "מחובר" : "מנותק";
-      el.className   = `connection-status ${ok ? "online" : "offline"}`;
-    }
-  </script>
+async function fetchLatest() {
+  const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("timestamp",{ascending:false});
+  if (!error) render(data);
+}
+</script>
 </body>
 </html>
