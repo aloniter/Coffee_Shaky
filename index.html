@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Coffee Shaky</title>
 
-<!-- Supabase client -->
+<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-/* ------ כללי ------ */
+/* ——— כללי ——— */
 body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
 .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
 h1{text-align:center;color:#6f4e37;margin:0}
 
-/* ------ כרטיסי קפה ------ */
+/* ——— כרטיסי קפה ——— */
 .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
 .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
 .coffee-card:hover{transform:translateY(-5px)}
 .coffee-card.selected{border-color:#6f4e37}
 .coffee-icon{width:55px;height:55px;margin:0 auto 8px}
-.coffee-card[data-coffee="Espresso"] .coffee-icon img{width:100%;height:100%;object-fit:contain}
+.coffee-card[data-coffee="אספרסו"] .coffee-icon img{width:100%;height:100%;object-fit:contain}
 
-/* ------ טופס ותור ------ */
+/* ——— טופס ותור ——— */
 .form-group{margin-bottom:15px}
 input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
 textarea{resize:vertical;min-height:60px}
@@ -43,13 +43,13 @@ li.completed{text-decoration:line-through;color:#999}
 
   <!-- בחירת משקה -->
   <div class="coffee-options">
-    <div class="coffee-card" data-coffee="Espresso">
+    <div class="coffee-card" data-coffee="אספרסו">
       <div class="coffee-icon"><img src="espresso.png" alt="Espresso"></div>אספרסו
     </div>
-    <div class="coffee-card" data-coffee="Macchiato"><div class="coffee-icon"></div>מקיאטו</div>
-    <div class="coffee-card" data-coffee="Cappuccino"><div class="coffee-icon"></div>קפוצ'ינו</div>
-    <div class="coffee-card" data-coffee="Americano"><div class="coffee-icon"></div>אמריקנו</div>
-    <div class="coffee-card" data-coffee="Tea"><div class="coffee-icon"></div>תה</div>
+    <div class="coffee-card" data-coffee="מקיאטו"><div class="coffee-icon"></div>מקיאטו</div>
+    <div class="coffee-card" data-coffee="קפוצ'ינו"><div class="coffee-icon"></div>קפוצ'ינו</div>
+    <div class="coffee-card" data-coffee="אמריקנו"><div class="coffee-icon"></div>אמריקנו</div>
+    <div class="coffee-card" data-coffee="תה"><div class="coffee-icon"></div>תה</div>
   </div>
 
   <!-- טופס -->
@@ -67,10 +67,10 @@ li.completed{text-decoration:line-through;color:#999}
 </div>
 
 <script type="module">
-/* ===== 1. Supabase חיבור ===== */
+/* ===== 1. Supabase ===== */
 const sb = supabase.createClient(
   "https://txnorybrbgmwzoibrode.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI..."
 );
 
 /* ===== 2. DOM ===== */
@@ -86,7 +86,7 @@ cards.forEach(c=>{
   c.onclick = () =>{
     cards.forEach(x=>x.classList.remove("selected"));
     c.classList.add("selected");
-    selected = c.dataset.coffee;
+    selected = c.dataset.coffee;     //‎ ← שם בעברית
   };
 });
 
