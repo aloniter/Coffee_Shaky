@@ -12,10 +12,13 @@
     body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
     .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
     h1{text-align:center;color:#6f4e37;margin-top:0}
+    /* --- beverage selector --- */
     .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
     .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
     .coffee-card:hover{transform:translateY(-5px)}
     .coffee-card.selected{border-color:#6f4e37}
+    .coffee-icon img{width:55px;height:55px;display:block;margin:0 auto 8px}
+    /* --- form & queue --- */
     .form-group{margin-bottom:15px}
     input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
     textarea{resize:vertical;min-height:60px}
@@ -35,11 +38,26 @@
 
     <!-- beverage selector -->
     <div class="coffee-options">
-      <div class="coffee-card" data-coffee="Espresso">אספרסו</div>
-      <div class="coffee-card" data-coffee="Macchiato">מקיאטו</div>
-      <div class="coffee-card" data-coffee="Cappuccino">קפוצ'ינו</div>
-      <div class="coffee-card" data-coffee="Americano">אמריקנו</div>
-      <div class="coffee-card" data-coffee="Tea">תה</div>
+      <div class="coffee-card" data-coffee="Espresso">
+        <div class="coffee-icon"><img src="espresso.png" alt="Espresso"></div>
+        אספרסו
+      </div>
+      <div class="coffee-card" data-coffee="Macchiato">
+        <div class="coffee-icon"><img src="macchiato.png" alt="Macchiato"></div>
+        מקיאטו
+      </div>
+      <div class="coffee-card" data-coffee="Cappuccino">
+        <div class="coffee-icon"><img src="cappuccino.png" alt="Cappuccino"></div>
+        קפוצ'ינו
+      </div>
+      <div class="coffee-card" data-coffee="Americano">
+        <div class="coffee-icon"><img src="americano.png" alt="Americano"></div>
+        אמריקנו
+      </div>
+      <div class="coffee-card" data-coffee="Tea">
+        <div class="coffee-icon"><img src="tea.png" alt="Tea"></div>
+        תה
+      </div>
     </div>
 
     <!-- order form -->
@@ -57,7 +75,7 @@
 
     <!-- queue -->
     <h2>תור ההזמנות</h2>
-    <button id="deleteAll" class="admin-btn">מחק את כל ההזמנות (קוד 1707)</button>
+    <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
     <ul id="orderQueue"><li>טוען…</li></ul>
   </div>
 
@@ -73,8 +91,7 @@ const form        = document.getElementById("orderForm");
 const orderQueue  = document.getElementById("orderQueue");
 const deleteAll   = document.getElementById("deleteAll");
 const cards       = document.querySelectorAll(".coffee-card");
-
-let selectedCoffee = null;
+let   selectedCoffee = null;
 
 /* ---------- 3.  UI events ---------- */
 cards.forEach(card => {
@@ -87,9 +104,8 @@ cards.forEach(card => {
 
 form.addEventListener("submit", async e => {
   e.preventDefault();
-  const name   = document.getElementById("userName").value.trim();
-  const note   = document.getElementById("specialRequest").value.trim();
-
+  const name = document.getElementById("userName").value.trim();
+  const note = document.getElementById("specialRequest").value.trim();
   if (!name || !selectedCoffee) { alert("יש להזין שם ולבחור משקה"); return; }
 
   const { error } = await supabase.from("orders").insert({
@@ -97,18 +113,21 @@ form.addEventListener("submit", async e => {
   });
   if (error) { alert("שגיאה בשליחת ההזמנה"); console.error(error); return; }
 
-  form.reset(); cards.forEach(c => c.classList.remove("selected")); selectedCoffee = null;
+  form.reset();
+  cards.forEach(c => c.classList.remove("selected"));
+  selectedCoffee = null;
 });
 
-/* admin: delete all */
+/* admin: delete all (hidden code) */
 deleteAll.addEventListener("click", async () => {
-  if (prompt("קוד מחיקה?") !== "1707") return;
+  const code = prompt("הכנס/י קוד מחיקה");
+  if (code !== "1707") return;
   const { error } = await supabase.from("orders").delete().neq("id", 0);
-  if (error) alert("Error"); else alert("נמחק");
+  if (error) alert("שגיאה"); else alert("כל ההזמנות נמחקו");
 });
 
 /* ---------- 4.  Rendering ---------- */
-function render(orders=[]) {
+function render(orders = []) {
   orderQueue.innerHTML = "";
   if (!orders.length) { orderQueue.innerHTML = "<li>אין הזמנות</li>"; return; }
 
@@ -121,15 +140,15 @@ function render(orders=[]) {
     const time = new Date(o.timestamp || Date.now())
                    .toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
     info.textContent = `${time} – ${o.name}: ${o.beverage}` +
-                       (o.special_request ? ` (בקשה: ${o.special_request})` : "");
+      (o.special_request ? ` (בקשה: ${o.special_request})` : "");
     li.appendChild(info);
 
-    /* mark done checkbox */
     const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.className = "order-check"; cb.checked = o.status === "completed";
-    cb.addEventListener("change",() =>
+    cb.type = "checkbox"; cb.className = "order-check";
+    cb.checked = o.status === "completed";
+    cb.addEventListener("change", () =>
       supabase.from("orders")
-              .update({ status: cb.checked ? "completed":"pending" })
+              .update({ status: cb.checked ? "completed" : "pending" })
               .eq("id", o.id)
     );
     li.appendChild(cb);
@@ -139,25 +158,25 @@ function render(orders=[]) {
 }
 
 /* ---------- 5.  Initial fetch ---------- */
-const { data: initial, error: initErr } =
-      await supabase.from("orders").select("*").order("timestamp",{ascending:false});
-if (initErr) console.error(initErr); else render(initial);
+(async () => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("timestamp", { ascending: false });
+  if (!error) render(data);
+})();
 
 /* ---------- 6.  Real-time listener ---------- */
-supabase.channel("public:orders")
-  .on("postgres_changes",
-      { event: "*", schema: "public", table: "orders" },
-      payload => {
-        // Simple strategy: refetch everything on any change
-        fetchLatest();
-      })
-  .subscribe();   //  [oai_citation:0‡supabase.com](https://supabase.com/docs/guides/realtime/subscribing-to-database-changes?utm_source=chatgpt.com)
+supabase.channel("orders_stream")
+  .on("postgres_changes", { event: "*", schema: "public", table: "orders" },
+    () => refresh())
+  .subscribe();
 
-async function fetchLatest() {
+async function refresh() {
   const { data, error } = await supabase
-        .from("orders")
-        .select("*")
-        .order("timestamp",{ascending:false});
+    .from("orders")
+    .select("*")
+    .order("timestamp", { ascending: false });
   if (!error) render(data);
 }
 </script>
