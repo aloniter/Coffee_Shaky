@@ -5,81 +5,113 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Coffee Shaky</title>
 
+  <!--favicon + PWA icons-->
   <link rel="icon" href="appicon.png">
   <link rel="apple-touch-icon" href="appicon.png">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6f4e37">
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* (אותו CSS בדיוק, קיצרתי כאן לצורך הדוגמה) */
-    .coffee-card.selected{border-color:#6f4e37}
-    .coffee-icon img{width:100%;height:100%;object-fit:contain}
-    [data-coffee="אספרסו"] .coffee-icon img{transform:scale(1.25);margin-top:-3px}
+  /* ——— כללי ——— */
+  body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
+  .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
+  h1{text-align:center;color:#6f4e37;margin:0}
+
+  /* ——— כרטיסים ——— */
+  .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
+  .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
+  .coffee-card:hover{transform:translateY(-5px)}
+  .coffee-card.selected{border-color:#6f4e37}
+  .coffee-icon{width:55px;height:55px;margin:0 auto 8px}
+  .coffee-icon img{width:100%;height:100%;object-fit:contain}
+  [data-coffee="אספרסו"] .coffee-icon img{transform:scale(1.25);margin-top:-3px}
+
+  /* ——— טופס ——— */
+  .form-group{margin-bottom:15px}
+  input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
+  textarea{resize:vertical;min-height:60px}
+  button{padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:6px;font-size:1.05em;cursor:pointer;width:100%}
+  button:hover{background:#5a3e2b}
+  .status{margin-top:6px;font-size:.85em;text-align:center}
+
+  /* ——— תור ——— */
+  .admin-btn{margin:25px auto 8px;padding:8px 18px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer;font-size:.95em;display:block;width:auto}
+  .admin-btn:hover{background:#d32f2f}
+  ul#orderQueue{list-style:none;padding:0;margin:0;max-height:260px;overflow-y:auto;border:1px solid #eee;border-radius:8px}
+  ul#orderQueue li{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #eee}
+  li.completed{text-decoration:line-through;color:#999}
+  .order-info{flex:1}
+  .order-check{margin-left:10px;width:20px;height:20px;cursor:pointer}
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Coffee Shaky ☕</h1>
 
+    <!-- כרטיסי משקאות -->
     <div class="coffee-options">
-      <!-- ... הכרטיסים ... -->
+      <div class="coffee-card" data-coffee="אספרסו"><div class="coffee-icon"><img src="espresso.png" alt="אספרסו"></div>אספרסו</div>
+      <div class="coffee-card" data-coffee="מקיאטו"><div class="coffee-icon"><img src="macchiatoIcon.png" alt="מקיאטו"></div>מקיאטו</div>
+      <div class="coffee-card" data-coffee="הפוך הבית"><div class="coffee-icon"><img src="cappuccinoIcon.png" alt="הפוך הבית"></div>הפוך&nbsp;הבית</div>
+      <div class="coffee-card" data-coffee="אמריקנו"><div class="coffee-icon"><img src="americanoIcon.png" alt="אמריקנו"></div>אמריקנו</div>
+      <div class="coffee-card" data-coffee="תה"><div class="coffee-icon"><img src="teaIcon.png" alt="תה"></div>תה</div>
     </div>
 
+    <!-- טופס הזמנה -->
     <form id="orderForm" autocomplete="off">
-      <!-- ... -->
+      <div class="form-group"><label for="userName">שם:</label><input id="userName" required></div>
+      <div class="form-group"><label for="specialRequest">בקשה מיוחדת (לא חובה):</label><textarea id="specialRequest"></textarea></div>
+      <button type="submit">הזמן משקה</button>
+      <div id="formStatus" class="status"></div>
     </form>
 
+    <!-- מחיקה + תור -->
     <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
     <h2>תור ההזמנות</h2>
     <ul id="orderQueue"><li>טוען…</li></ul>
   </div>
 
   <script type="module">
-  /* Supabase */
+  /* Supabase – החלף ל-Anon key שלך אם צריך */
   const sb = supabase.createClient(
     "https://txnorybrbgmwzoibrode.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   );
 
-  /* DOM refs */
-  const cards=document.querySelectorAll(".coffee-card");
+  /* DOM */
+  const cards=[...document.querySelectorAll(".coffee-card")];
   const form=document.getElementById("orderForm");
   const list=document.getElementById("orderQueue");
   const status=document.getElementById("formStatus");
   const delBtn=document.getElementById("deleteAll");
   let selected=null;
 
-  /* בחירת משקה */
+  /* בחירה */
   cards.forEach(c=>c.onclick=()=>{
     cards.forEach(x=>x.classList.remove("selected"));
     c.classList.add("selected");
     selected=c.dataset.coffee;
   });
 
-  /* שליחת הזמנה */
+  /* שליחה */
   form.addEventListener("submit",async e=>{
     e.preventDefault();
     status.textContent="";
     const name=document.getElementById("userName").value.trim();
     const note=document.getElementById("specialRequest").value.trim();
     if(!name||!selected){status.textContent="יש להזין שם ולבחור משקה";return;}
-
     const {error}=await sb.from("orders").insert({name,beverage:selected,special_request:note,status:"pending"});
-    if(error){status.textContent="❌ שגיאה";console.error(error);}
-    else{
-      status.textContent="✅ ההזמנה נקלטה!";
-      form.reset();cards.forEach(x=>x.classList.remove("selected"));selected=null;
-      refresh(); // רענן מיד
-    }
+    status.textContent=error?"❌ שגיאה":"✅ נשמר!";
+    if(!error){form.reset();cards.forEach(x=>x.classList.remove("selected"));selected=null;refresh();}
   });
 
   /* מחיקה */
   delBtn.onclick=async()=>{
     if(prompt("קוד מחיקה")!=="1707")return;
-    await sb.from("orders").delete().neq("id",0);
-    refresh();
+    await sb.from("orders").delete().neq("id",0);refresh();
   };
 
   /* רינדור */
@@ -88,32 +120,21 @@
     arr.forEach(o=>{
       const li=document.createElement("li");
       if(o.status==="completed")li.classList.add("completed");
-      li.innerHTML=`
-        <span class="order-info">
-          ${new Date(o.created_at||Date.now()).toLocaleTimeString("he-IL",{hour:'2-digit',minute:'2-digit'})}
-          – ${o.name}: ${o.beverage}${o.special_request?` (בקשה: ${o.special_request})`:""}
-        </span>
-        <input type="checkbox" class="order-check" ${o.status==="completed"?"checked":""}>
-      `;
-      li.querySelector(".order-check").onchange=e=>{
-        sb.from("orders").update({status:e.target.checked?"completed":"pending"}).eq("id",o.id);
-      };
+      li.innerHTML=`<span class="order-info">${new Date(o.created_at||Date.now()).toLocaleTimeString("he-IL",{hour:'2-digit',minute:'2-digit'})} – ${o.name}: ${o.beverage}${o.special_request?` (בקשה: ${o.special_request})`:""}</span>
+        <input type="checkbox" class="order-check" ${o.status==="completed"?"checked":""}>`;
+      li.querySelector("input").onchange=e=>sb.from("orders").update({status:e.target.checked?"completed":"pending"}).eq("id",o.id);
       list.appendChild(li);
     });
   }
-
-  async function refresh(){
-    const {data}=await sb.from("orders").select("*").order("id",{ascending:false});
-    render(data||[]);
-  }
+  async function refresh(){const {data}=await sb.from("orders").select("*").order("id",{ascending:false});render(data||[]);}
   refresh();
   sb.channel("orders_stream").on("postgres_changes",{event:"*",schema:"public",table:"orders"},refresh).subscribe();
 
-  /* רישום Service Worker */
+  /* Service Worker */
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register("./service-worker.js")
       .then(reg=>reg.update())
-      .catch(err=>console.error("SW error",err));
+      .catch(console.error);
   }
   </script>
 </body>
