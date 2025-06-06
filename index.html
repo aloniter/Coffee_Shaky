@@ -1,187 +1,171 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Coffee Shaky</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coffee Shaky</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#6f4e37">
-  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ——— כללי ——— */
+body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
+.container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
+h1{text-align:center;color:#6f4e37;margin:0}
 
-  <style>
-  /* ——— כללי ——— */
-  body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
-  .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
-  h1{text-align:center;color:#6f4e37;margin:0}
+/* ——— כרטיסי קפה ——— */
+.coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
+.coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
+.coffee-card:hover{transform:translateY(-5px)}
+.coffee-card.selected{border-color:#6f4e37}
+.coffee-icon{width:55px;height:55px;margin:0 auto 8px}
+.coffee-icon img{width:100%;height:100%;object-fit:contain}
 
-  /* ——— כרטיסי קפה ——— */
-  .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
-  .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
-  .coffee-card:hover{transform:translateY(-5px)}
-  .coffee-card.selected{border-color:#6f4e37}
-  .coffee-icon{width:55px;height:55px;margin:0 auto 8px}
-  .coffee-icon img{width:100%;height:100%;object-fit:contain}
+/* ——— טופס ——— */
+.form-group{margin-bottom:15px}
+input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
+textarea{resize:vertical;min-height:60px}
+button{padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:6px;font-size:1.05em;cursor:pointer;width:100%}
+button:hover{background:#5a3e2b}
+.status{margin-top:6px;font-size:.85em;text-align:center;color:#2e7d32}
 
-  /* ——— טופס ותור ——— */
-  .form-group{margin-bottom:15px}
-  input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
-  textarea{resize:vertical;min-height:60px}
-  button{padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:6px;font-size:1.05em;cursor:pointer;width:100%}
-  button:hover{background:#5a3e2b}
-  ul{list-style:none;padding:0;margin:15px 0 0}
-  li{display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #eee}
-  li.completed{text-decoration:line-through;color:#999}
-  .order-info{flex:1}
-  .order-check{margin-left:10px;width:20px;height:20px;cursor:pointer}
-  .admin-btn{margin:5px;padding:6px 12px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer}
-  .status{margin-top:6px;font-size:.85em;text-align:center;color:#c62828}
-  </style>
+/* ——— תור הזמנות ——— */
+.queue-section{margin-top:25px}
+.queue-section h2{margin:0 0 10px;color:#6f4e37}
+.admin-btn{padding:8px 18px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer;font-size:.95em;display:block;margin:0 auto 12px;width:auto}
+.admin-btn:hover{background:#d32f2f}
+ul#orderQueue{list-style:none;padding:0;margin:0;max-height:260px;overflow-y:auto;border:1px solid #eee;border-radius:8px}
+ul#orderQueue li{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #eee}
+ul#orderQueue li:last-child{border-bottom:none}
+li.completed{text-decoration:line-through;color:#999}
+.order-info{flex:1}
+.order-check{margin-left:10px;width:20px;height:20px;cursor:pointer}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Coffee Shaky ☕</h1>
+<div class="container">
+  <h1>Coffee Shaky ☕</h1>
 
-    <!-- בחירת משקה -->
-    <div class="coffee-options">
-      <div class="coffee-card" data-coffee="אספרסו">
-        <div class="coffee-icon"><img src="espresso.png" alt="אספרסו"></div>אספרסו
-      </div>
-      <div class="coffee-card" data-coffee="מקיאטו">
-        <div class="coffee-icon"><img src="macchiatoIcon.png" alt="מקיאטו"></div>מקיאטו
-      </div>
-      <div class="coffee-card" data-coffee="קפוצ'ינו">
-        <div class="coffee-icon"><img src="cappuccinoIcon.png" alt="קפוצ'ינו"></div>קפוצ'ינו
-      </div>
-      <div class="coffee-card" data-coffee="אמריקנו">
-        <div class="coffee-icon"><img src="americanoIcon.png" alt="אמריקנו"></div>אמריקנו
-      </div>
-      <div class="coffee-card" data-coffee="תה">
-        <div class="coffee-icon"><img src="teaIcon.png" alt="תה"></div>תה
-      </div>
+  <!-- בחירת משקה -->
+  <div class="coffee-options">
+    <div class="coffee-card" data-coffee="אספרסו">
+      <div class="coffee-icon"><img src="espresso.png" alt="אספרסו"></div>אספרסו
     </div>
+    <div class="coffee-card" data-coffee="מקיאטו">
+      <div class="coffee-icon"><img src="macchiatoIcon.png" alt="מקיאטו"></div>מקיאטו
+    </div>
+    <div class="coffee-card" data-coffee="קפוצ'ינו">
+      <div class="coffee-icon"><img src="cappuccinoIcon.png" alt="קפוצ'ינו"></div>קפוצ'ינו
+    </div>
+    <div class="coffee-card" data-coffee="אמריקנו">
+      <div class="coffee-icon"><img src="americanoIcon.png" alt="אמריקנו"></div>אמריקנו
+    </div>
+    <div class="coffee-card" data-coffee="תה">
+      <div class="coffee-icon"><img src="teaIcon.png" alt="תה"></div>תה
+    </div>
+  </div>
 
-    <!-- טופס -->
-    <form id="orderForm" autocomplete="off">
-      <div class="form-group"><label for="userName">שם:</label><input id="userName" required></div>
-      <div class="form-group"><label for="specialRequest">בקשה מיוחדת (לא חובה):</label><textarea id="specialRequest"></textarea></div>
-      <button type="submit">הזמן משקה</button>
-      <div id="formStatus" class="status"></div>
-    </form>
+  <!-- טופס -->
+  <form id="orderForm" autocomplete="off">
+    <div class="form-group"><label for="userName">שם:</label><input id="userName" required></div>
+    <div class="form-group"><label for="specialRequest">בקשה מיוחדת (לא חובה):</label><textarea id="specialRequest"></textarea></div>
+    <button type="submit">הזמן משקה</button>
+    <div id="formStatus" class="status"></div>
+  </form>
 
-    <!-- תור -->
+  <!-- תור הזמנות + כפתור מחיקה -->
+  <div class="queue-section">
     <h2>תור ההזמנות</h2>
     <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
     <ul id="orderQueue"><li>טוען…</li></ul>
   </div>
+</div>
 
-  <!-- ——— Supabase + לוגיקה ——— -->
-  <script type="module">
-  /* ===== 1. Supabase ===== */
-  const sb = supabase.createClient(
-    "https://txnorybrbgmwzoibrode.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
-  );
+<script type="module">
+/* ===== Supabase ===== */
+const sb = supabase.createClient(
+  "https://txnorybrbgmwzoibrode.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
+);
 
-  /* ===== 2. DOM ===== */
-  const cards       = document.querySelectorAll(".coffee-card");
-  const form        = document.getElementById("orderForm");
-  const orderQueue  = document.getElementById("orderQueue");
-  const statusLine  = document.getElementById("formStatus");
-  const deleteAll   = document.getElementById("deleteAll");
-  let   selected    = null;
+/* ===== DOM ===== */
+const cards       = document.querySelectorAll(".coffee-card");
+const form        = document.getElementById("orderForm");
+const orderQueue  = document.getElementById("orderQueue");
+const statusLine  = document.getElementById("formStatus");
+const deleteAll   = document.getElementById("deleteAll");
+let   selected    = null;
 
-  /* ===== 3. בחירת משקה ===== */
-  cards.forEach(c=>{
-    c.onclick = () =>{
-      cards.forEach(x=>x.classList.remove("selected"));
-      c.classList.add("selected");
-      selected = c.dataset.coffee;
-    };
-  });
-
-  /* ===== 4. שליחת הזמנה ===== */
-  form.addEventListener("submit", async ev=>{
-    ev.preventDefault();
-    statusLine.textContent="";
-    const name=document.getElementById("userName").value.trim();
-    const note=document.getElementById("specialRequest").value.trim();
-    if(!name||!selected){statusLine.textContent="יש להזין שם ולבחור משקה";return;}
-
-    const {error}=await sb.from("orders")
-      .insert({name, beverage:selected, special_request:note, status:"pending"});
-
-    if(error){
-      statusLine.textContent="❌ שגיאה בשליחת ההזמנה";
-      console.error(error);
-    }else{
-      statusLine.textContent="✅ ההזמנה התקבלה!";
-      form.reset(); cards.forEach(x=>x.classList.remove("selected")); selected=null;
-    }
-  });
-
-  /* ===== 5. מחיקה ===== */
-  deleteAll.onclick = async()=>{
-    if(prompt("קוד מחיקה")!=="1707") return;
-    const {error}=await sb.from("orders").delete().neq("id",0);
-    if(error) alert("שגיאה"); else alert("נמחק");
+/* ===== בחירת משקה ===== */
+cards.forEach(c=>{
+  c.onclick = () =>{
+    cards.forEach(x=>x.classList.remove("selected"));
+    c.classList.add("selected");
+    selected = c.dataset.coffee;
   };
+});
 
-  /* ===== 6. רינדור ===== */
-  function render(list){
-    orderQueue.innerHTML=list.length?"":"<li>אין הזמנות</li>";
-    list.forEach(o=>{
-      const li=document.createElement("li");
-      if(o.status==="completed") li.classList.add("completed");
-      const span=document.createElement("span");
-      span.className="order-info";
-      const time=new Date(o.created_at || Date.now())
-        .toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
-      span.textContent=`${time} – ${o.name}: ${o.beverage}${o.special_request?` (בקשה: ${o.special_request})`:""}`;
-      li.appendChild(span);
-      const cb=document.createElement("input");
-      cb.type="checkbox";cb.className="order-check";cb.checked=o.status==="completed";
-      cb.onchange=()=>sb.from("orders").update({status:cb.checked?"completed":"pending"}).eq("id",o.id);
-      li.appendChild(cb);
-      orderQueue.appendChild(li);
-    });
+/* ===== שליחת הזמנה ===== */
+form.addEventListener("submit", async ev=>{
+  ev.preventDefault();
+  statusLine.textContent="";
+  const name=document.getElementById("userName").value.trim();
+  const note=document.getElementById("specialRequest").value.trim();
+  if(!name||!selected){statusLine.textContent="יש להזין שם ולבחור משקה";return;}
+
+  const {error}=await sb.from("orders")
+    .insert({name, beverage:selected, special_request:note, status:"pending"});
+
+  if(error){
+    statusLine.textContent="❌ שגיאה בשליחת ההזמנה";
+    console.error(error);
+  }else{
+    statusLine.textContent="✅ ההזמנה התקבלה!";
+    form.reset(); cards.forEach(x=>x.classList.remove("selected")); selected=null;
   }
+});
 
-  /* ===== 7. טעינה ראשונית + Realtime ===== */
-  async function refresh(){
-    const {data, error} = await sb
-      .from("orders")
-      .select("*")
-      .order("id", { ascending: false });   // מיון לפי id יורד
+/* ===== מחיקת כל ההזמנות ===== */
+deleteAll.onclick = async()=>{
+  if(prompt("קוד מחיקה")!=="1707") return;
+  const {error}=await sb.from("orders").delete().neq("id",0);
+  if(error) alert("שגיאה"); else alert("כל ההזמנות נמחקו");
+};
 
-    if(error){
-      console.error("Supabase read error:", error.message);
-      return;
-    }
-    render(data);
-  }
-  refresh();
+/* ===== רינדור תור ===== */
+function render(list){
+  orderQueue.innerHTML=list.length?"":"<li>אין הזמנות</li>";
+  list.forEach(o=>{
+    const li=document.createElement("li");
+    if(o.status==="completed") li.classList.add("completed");
 
-  sb.channel("orders_stream")
-    .on("postgres_changes",
-        {event:"*",schema:"public",table:"orders"},
-        () => refresh())
-    .subscribe();
-  </script>
+    const span=document.createElement("span");
+    span.className="order-info";
+    const time=new Date(o.created_at||Date.now())
+      .toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
+    span.textContent=`${time} – ${o.name}: ${o.beverage}${o.special_request?` (בקשה: ${o.special_request})`:""}`;
+    li.appendChild(span);
 
-  <!-- ——— Service-Worker Registration ——— -->
-  <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(() => console.log('✅ Service Worker registered'))
-        .catch(err => console.error('❌ Service Worker registration failed:', err));
-    });
-  }
-  </script>
+    const cb=document.createElement("input");
+    cb.type="checkbox";cb.className="order-check";cb.checked=o.status==="completed";
+    cb.onchange=()=>sb.from("orders").update({status:cb.checked?"completed":"pending"}).eq("id",o.id);
+    li.appendChild(cb);
+
+    orderQueue.appendChild(li);
+  });
+}
+
+/* ===== טעינה ראשונית + Realtime ===== */
+async function refresh(){
+  const {data,error}=await sb.from("orders").select("*").order("id",{ascending:false});
+  if(!error) render(data);
+}
+refresh();
+
+sb.channel("orders_stream")
+  .on("postgres_changes",{event:"*",schema:"public",table:"orders"},refresh)
+  .subscribe();
+</script>
 </body>
 </html>
