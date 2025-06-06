@@ -1,22 +1,13 @@
 {
   "name": "Coffee Shaky",
   "short_name": "Shaky ☕",
-  "start_url": "./",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#fdf6f0",
   "theme_color": "#6f4e37",
   "lang": "he",
   "icons": [
-    {
-      "src": "appicon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "appicon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "appicon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "appicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
