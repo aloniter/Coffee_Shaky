@@ -1,11 +1,12 @@
 /* ---- Coffee Shaky PWA Service-Worker ---- */
-const CACHE_NAME = "shaky-cache-v4";
+const CACHE_NAME = "shaky-cache-v5";        // ← גרסה חדשה
 
 /* משאבים לאחסון-מראש */
-const urlsToCache = [
+const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./service-worker.js",
   /* אייקון האפליקציה */
   "./appicon.png",
   /* אייקוני המשקאות */
@@ -16,15 +17,13 @@ const urlsToCache = [
   "./teaIcon.png"
 ];
 
-/* install – cache everything */
+/* install – precache */
 self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-  );
-  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();           // השתלטות מיידית
 });
 
-/* activate – clean old caches */
+/* activate – ניקוי קאש ישן */
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -34,20 +33,19 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
-/* fetch – cache-first, then network, then fallback */
+/* fetch – cache-first, refresh in background */
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;               // ignore POST/PUT
+  if (event.request.method !== "GET") return;
   event.respondWith(
     caches.match(event.request).then(cached => {
-      const fetchPromise = fetch(event.request)
+      const network = fetch(event.request)
         .then(resp => {
-          /* save fresh copy */
-          const respClone = resp.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, respClone));
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
           return resp;
         })
-        .catch(() => cached || caches.match("./index.html")); // offline fallback
-      return cached || fetchPromise;
+        .catch(() => cached || caches.match("./index.html"));
+      return cached || network;
     })
   );
 });
