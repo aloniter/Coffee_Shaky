@@ -1,5 +1,5 @@
 /* ---- Coffee Shaky PWA Service-Worker ---- */
-const CACHE_NAME = "shaky-cache-v1";
+const CACHE_NAME = "shaky-cache-v2";
 
 /* משאבים לאחסון-מראש */
 const urlsToCache = [
