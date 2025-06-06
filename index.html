@@ -10,10 +10,10 @@
   <link rel="apple-touch-icon" sizes="180x180" href="appicon-192.png">
 
   <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest-v2.json"> <!-- ⇦ שם חדש -->
   <meta name="theme-color" content="#6f4e37">
 
-  <!-- Supabase SDK -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -40,7 +40,7 @@
   button:hover{background:#5a3e2b}
   .status{margin-top:6px;font-size:.85em;text-align:center;color:#2e7d32}
 
-  /* ——— תור הזמנות ——— */
+  /* ——— תור ——— */
   .admin-btn{margin:25px auto 8px;padding:8px 18px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer;font-size:.95em;display:block;width:auto}
   .admin-btn:hover{background:#d32f2f}
   h2.queue-title{margin:0 0 10px;color:#6f4e37;text-align:right}
@@ -65,7 +65,7 @@
       <div class="coffee-card" data-coffee="תה"><div class="coffee-icon"><img src="teaIcon.png" alt="תה"></div>תה</div>
     </div>
 
-    <!-- טופס הזמנה -->
+    <!-- טופס -->
     <form id="orderForm" autocomplete="off">
       <div class="form-group"><label for="userName">שם:</label><input id="userName" required></div>
       <div class="form-group"><label for="specialRequest">בקשה מיוחדת (לא חובה):</label><textarea id="specialRequest"></textarea></div>
@@ -73,26 +73,24 @@
       <div id="formStatus" class="status"></div>
     </form>
 
-    <!-- כפתור מחיקה מעל הכותרת -->
+    <!-- מחיקה + תור -->
     <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
-
-    <!-- כותרת התור + רשימה -->
     <h2 class="queue-title">תור ההזמנות</h2>
     <ul id="orderQueue"><li>טוען…</li></ul>
   </div>
 
-  <!-- Supabase לוגיקה -->
+  <!-- לוגיקה -->
   <script type="module">
   const sb = supabase.createClient(
     "https://txnorybrbgmwzoibrode.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
   );
 
-  const cards = document.querySelectorAll(".coffee-card");
-  const form  = document.getElementById("orderForm");
-  const list  = document.getElementById("orderQueue");
-  const status= document.getElementById("formStatus");
-  const delBtn= document.getElementById("deleteAll");
+  const cards=document.querySelectorAll(".coffee-card");
+  const form=document.getElementById("orderForm");
+  const list=document.getElementById("orderQueue");
+  const status=document.getElementById("formStatus");
+  const delBtn=document.getElementById("deleteAll");
   let selected=null;
 
   cards.forEach(c=>c.onclick=()=>{
@@ -107,16 +105,16 @@
     const name=document.getElementById("userName").value.trim();
     const note=document.getElementById("specialRequest").value.trim();
     if(!name||!selected){status.textContent="יש להזין שם ולבחור משקה";return;}
-
     const {error}=await sb.from("orders").insert({name,beverage:selected,special_request:note,status:"pending"});
-    if(error){status.textContent="❌ שגיאה";console.error(error);}
-    else{status.textContent="✅ ההזמנה התקבלה!";form.reset();cards.forEach(x=>x.classList.remove("selected"));selected=null;}
+    if(error){status.textContent="❌ שגיאה";console.error(error);} else {
+      status.textContent="✅ ההזמנה התקבלה!";
+      form.reset();cards.forEach(x=>x.classList.remove("selected"));selected=null;
+    }
   });
 
   delBtn.onclick=async()=>{
     if(prompt("קוד מחיקה")!=="1707")return;
-    const {error}=await sb.from("orders").delete().neq("id",0);
-    if(error)alert("שגיאה");else alert("נמחק");
+    await sb.from("orders").delete().neq("id",0);refresh();
   };
 
   function render(arr){
@@ -126,13 +124,4 @@
       if(o.status==="completed")li.classList.add("completed");
       li.innerHTML=`<span class="order-info">${new Date(o.created_at||Date.now()).toLocaleTimeString("he-IL",{hour:'2-digit',minute:'2-digit'})} – ${o.name}: ${o.beverage}${o.special_request?` (בקשה: ${o.special_request})`:""}</span>
         <input type="checkbox" class="order-check" ${o.status==="completed"?"checked":""}>`;
-      li.querySelector("input").onchange=e=>sb.from("orders").update({status:e.target.checked?"completed":"pending"}).eq("id",o.id);
-      list.appendChild(li);
-    });
-  }
-  async function refresh(){const {data}=await sb.from("orders").select("*").order("id",{ascending:false});render(data);}
-  refresh();
-  sb.channel("orders_stream").on("postgres_changes",{event:"*",schema:"public",table:"orders"},refresh).subscribe();
-  </script>
-</body>
-</html>
+      li.querySelector("input").onchange=e=>sb.from("orders").update({status:e.target.checked?
