@@ -1,26 +1,24 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Coffee Shaky</title>
 
-  <!--favicon + PWA icons-->
-  <link rel="icon" href="appicon.png">
-  <link rel="apple-touch-icon" href="appicon.png">
+  <!-- Manifest (ללא icons) -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6f4e37">
 
-  <!-- Supabase -->
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-  /* ——— כללי ——— */
+  /* ——— בסיס ——— */
   body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
   .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
   h1{text-align:center;color:#6f4e37;margin:0}
 
-  /* ——— כרטיסים ——— */
+  /* ——— כרטיסי קפה ——— */
   .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
   .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
   .coffee-card:hover{transform:translateY(-5px)}
@@ -51,7 +49,7 @@
   <div class="container">
     <h1>Coffee Shaky ☕</h1>
 
-    <!-- כרטיסי משקאות -->
+    <!-- כרטיסים -->
     <div class="coffee-options">
       <div class="coffee-card" data-coffee="אספרסו"><div class="coffee-icon"><img src="espresso.png" alt="אספרסו"></div>אספרסו</div>
       <div class="coffee-card" data-coffee="מקיאטו"><div class="coffee-icon"><img src="macchiatoIcon.png" alt="מקיאטו"></div>מקיאטו</div>
@@ -60,8 +58,8 @@
       <div class="coffee-card" data-coffee="תה"><div class="coffee-icon"><img src="teaIcon.png" alt="תה"></div>תה</div>
     </div>
 
-    <!-- טופס הזמנה -->
-    <form id="orderForm" autocomplete="off">
+    <!-- טופס -->
+    <form id="orderForm">
       <div class="form-group"><label for="userName">שם:</label><input id="userName" required></div>
       <div class="form-group"><label for="specialRequest">בקשה מיוחדת (לא חובה):</label><textarea id="specialRequest"></textarea></div>
       <button type="submit">הזמן משקה</button>
@@ -75,13 +73,11 @@
   </div>
 
   <script type="module">
-  /* Supabase – החלף ל-Anon key שלך אם צריך */
   const sb = supabase.createClient(
     "https://txnorybrbgmwzoibrode.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "YOUR_PUBLIC_ANON_KEY"
   );
 
-  /* DOM */
   const cards=[...document.querySelectorAll(".coffee-card")];
   const form=document.getElementById("orderForm");
   const list=document.getElementById("orderQueue");
@@ -89,14 +85,12 @@
   const delBtn=document.getElementById("deleteAll");
   let selected=null;
 
-  /* בחירה */
   cards.forEach(c=>c.onclick=()=>{
     cards.forEach(x=>x.classList.remove("selected"));
     c.classList.add("selected");
     selected=c.dataset.coffee;
   });
 
-  /* שליחה */
   form.addEventListener("submit",async e=>{
     e.preventDefault();
     status.textContent="";
@@ -108,32 +102,29 @@
     if(!error){form.reset();cards.forEach(x=>x.classList.remove("selected"));selected=null;refresh();}
   });
 
-  /* מחיקה */
   delBtn.onclick=async()=>{
     if(prompt("קוד מחיקה")!=="1707")return;
-    await sb.from("orders").delete().neq("id",0);refresh();
+    await sb.from("orders").delete().neq("id",0);
+    refresh();
   };
 
-  /* רינדור */
-  function render(arr){
-    list.innerHTML=arr.length?"":"<li>אין הזמנות</li>";
-    arr.forEach(o=>{
+  async function refresh(){
+    const {data}=await sb.from("orders").select("*").order("id",{ascending:false});
+    list.innerHTML=data&&data.length?"":"<li>אין הזמנות</li>";
+    data.forEach(o=>{
       const li=document.createElement("li");
       if(o.status==="completed")li.classList.add("completed");
       li.innerHTML=`<span class="order-info">${new Date(o.created_at||Date.now()).toLocaleTimeString("he-IL",{hour:'2-digit',minute:'2-digit'})} – ${o.name}: ${o.beverage}${o.special_request?` (בקשה: ${o.special_request})`:""}</span>
-        <input type="checkbox" class="order-check" ${o.status==="completed"?"checked":""}>`;
+        <input type="checkbox" class="order-check"${o.status==="completed"?" checked":""}>`;
       li.querySelector("input").onchange=e=>sb.from("orders").update({status:e.target.checked?"completed":"pending"}).eq("id",o.id);
       list.appendChild(li);
     });
   }
-  async function refresh(){const {data}=await sb.from("orders").select("*").order("id",{ascending:false});render(data||[]);}
   refresh();
   sb.channel("orders_stream").on("postgres_changes",{event:"*",schema:"public",table:"orders"},refresh).subscribe();
 
-  /* Service Worker */
-  if ('serviceWorker' in navigator){
+  if('serviceWorker' in navigator){
     navigator.serviceWorker.register("./service-worker.js")
-      .then(reg=>reg.update())
       .catch(console.error);
   }
   </script>
