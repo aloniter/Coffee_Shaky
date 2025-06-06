@@ -4,18 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Coffee Shaky</title>
-<!-- favicon רגיל -->
-<link rel="icon" type="image/png" sizes="192x192" href="appicon-192.png">
 
-<!-- Apple touch icon למסך-בית ב-iOS -->
-<link rel="apple-touch-icon" sizes="180x180" href="appicon-192.png">
+  <!-- favicon + Apple icon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="appicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="appicon-192.png">
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6f4e37">
-  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 
-  <!-- Supabase -->
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -31,6 +29,12 @@
   .coffee-card.selected{border-color:#6f4e37}
   .coffee-icon{width:55px;height:55px;margin:0 auto 8px}
   .coffee-icon img{width:100%;height:100%;object-fit:contain}
+
+  /* הגדלה ממוקדת לאספרסו */
+  [data-coffee="אספרסו"] .coffee-icon img{
+    transform:scale(1.25);      /* גודל קצת גדול יותר */
+    margin-top:-3px;            /* יישור לגובה הכרטיס */
+  }
 
   /* ——— טופס ותור ——— */
   .form-group{margin-bottom:15px}
@@ -92,7 +96,7 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
   );
 
-  /* ===== 2. DOM ===== */
+  /* ===== DOM ===== */
   const cards       = document.querySelectorAll(".coffee-card");
   const form        = document.getElementById("orderForm");
   const orderQueue  = document.getElementById("orderQueue");
@@ -100,7 +104,7 @@
   const deleteAll   = document.getElementById("deleteAll");
   let   selected    = null;
 
-  /* ===== 3. בחירת משקה ===== */
+  /* בחירת משקה */
   cards.forEach(c=>{
     c.onclick = () =>{
       cards.forEach(x=>x.classList.remove("selected"));
@@ -109,7 +113,7 @@
     };
   });
 
-  /* ===== 4. שליחת הזמנה ===== */
+  /* שליחת הזמנה */
   form.addEventListener("submit", async ev=>{
     ev.preventDefault();
     statusLine.textContent="";
@@ -129,14 +133,14 @@
     }
   });
 
-  /* ===== 5. מחיקה ===== */
+  /* מחיקה */
   deleteAll.onclick = async()=>{
     if(prompt("קוד מחיקה")!=="1707") return;
     const {error}=await sb.from("orders").delete().neq("id",0);
     if(error) alert("שגיאה"); else alert("נמחק");
   };
 
-  /* ===== 6. רינדור ===== */
+  /* רינדור */
   function render(list){
     orderQueue.innerHTML=list.length?"":"<li>אין הזמנות</li>";
     list.forEach(o=>{
@@ -156,20 +160,15 @@
     });
   }
 
-  /* ===== 7. טעינה ראשונית + Realtime ===== */
+  /* טעינה + Realtime */
   async function refresh(){
-    const {data, error} = await sb
-      .from("orders")
-      .select("*")
-      .order("id", { ascending: false });
+    const {data,error}=await sb.from("orders").select("*").order("id",{ascending:false});
     if(!error) render(data);
   }
   refresh();
 
   sb.channel("orders_stream")
-    .on("postgres_changes",
-        {event:"*",schema:"public",table:"orders"},
-        refresh)
+    .on("postgres_changes",{event:"*",schema:"public",table:"orders"},refresh)
     .subscribe();
   </script>
 </body>
