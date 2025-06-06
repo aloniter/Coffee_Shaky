@@ -5,9 +5,6 @@
   "display": "standalone",
   "background_color": "#fdf6f0",
   "theme_color": "#6f4e37",
-  "icons": [
-    { "src": "appicon.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "appicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ],
-  "lang": "he"
+  "lang": "he",
+  "icons": []
 }
