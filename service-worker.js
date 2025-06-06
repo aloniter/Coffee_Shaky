@@ -7,8 +7,7 @@ const urlsToCache = [
   "./index.html",
   "./manifest.json",
   /* אייקון האפליקציה */
-  "./appicon-192.png",
-  "./appicon-512.png",
+  "./appicon.png",
   /* אייקוני המשקאות */
   "./espresso.png",
   "./macchiatoIcon.png",
