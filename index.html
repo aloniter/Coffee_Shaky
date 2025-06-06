@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Coffee Shaky</title>
 
-  <!-- favicon + Apple icon -->
-  <link rel="icon" type="image/png" sizes="192x192" href="appicon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="appicon.png">
+  <!-- favicon + Apple-icon -->
+  <link rel="icon" type="image/png" href="appicon.png">
+  <link rel="apple-touch-icon" href="appicon.png">
 
   <!-- PWA -->
-  <link rel="manifest" href="manifest-v2.json"> <!-- ⇦ שם חדש -->
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6f4e37">
 
   <!-- Supabase -->
@@ -29,7 +29,7 @@
   .coffee-card.selected{border-color:#6f4e37}
   .coffee-icon{width:55px;height:55px;margin:0 auto 8px}
   .coffee-icon img{width:100%;height:100%;object-fit:contain}
-  /* הגדלה לאספרסו */
+  /* הגדלת אייקון אספרסו */
   [data-coffee="אספרסו"] .coffee-icon img{transform:scale(1.25);margin-top:-3px}
 
   /* ——— טופס ——— */
@@ -43,7 +43,7 @@
   /* ——— תור ——— */
   .admin-btn{margin:25px auto 8px;padding:8px 18px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer;font-size:.95em;display:block;width:auto}
   .admin-btn:hover{background:#d32f2f}
-  h2.queue-title{margin:0 0 10px;color:#6f4e37;text-align:right}
+  h2{margin:0 0 10px;color:#6f4e37;text-align:right}
   ul#orderQueue{list-style:none;padding:0;margin:0;max-height:260px;overflow-y:auto;border:1px solid #eee;border-radius:8px}
   ul#orderQueue li{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #eee}
   ul#orderQueue li:last-child{border-bottom:none}
@@ -75,11 +75,11 @@
 
     <!-- מחיקה + תור -->
     <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
-    <h2 class="queue-title">תור ההזמנות</h2>
+    <h2>תור ההזמנות</h2>
     <ul id="orderQueue"><li>טוען…</li></ul>
   </div>
 
-  <!-- לוגיקה -->
+  <!-- Supabase לוגיקה -->
   <script type="module">
   const sb = supabase.createClient(
     "https://txnorybrbgmwzoibrode.supabase.co",
