@@ -1,11 +1,10 @@
-const CACHE = "shaky-cache-v6";
+const CACHE = "shaky-cache-v7";
 
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./service-worker.js",
-  "./appicon.png",
   "./espresso.png",
   "./macchiatoIcon.png",
   "./cappuccinoIcon.png",
