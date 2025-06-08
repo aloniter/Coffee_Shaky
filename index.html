@@ -86,100 +86,102 @@
   </div>
 
   <script type="module">
-    // ESM import of Supabase client
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
     const sb = createClient(
-      "https://txnorybrbgmwzoibrode.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk"
+      'https://txnorybrbgmwzoibrode.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk'
     );
 
-    const cards = [...document.querySelectorAll(".coffee-card")];
-    const form = document.getElementById("orderForm");
-    const list = document.getElementById("orderQueue");
-    const status = document.getElementById("formStatus");
-    const delBtn = document.getElementById("deleteAll");
+    const cards = [...document.querySelectorAll('.coffee-card')];
+    const form = document.getElementById('orderForm');
+    const list = document.getElementById('orderQueue');
+    const status = document.getElementById('formStatus');
+    const delBtn = document.getElementById('deleteAll');
     let selected = null;
 
-    // Select a coffee
+    // לבחור משקה
     cards.forEach(c => {
-      c.addEventListener("click", () => {
-        cards.forEach(x => x.classList.remove("selected"));
-        c.classList.add("selected");
+      c.addEventListener('click', () => {
+        cards.forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
         selected = c.dataset.coffee;
       });
     });
 
-    // Submit new order
-    form.addEventListener("submit", async e => {
+    // שליחת הזמנה
+    form.addEventListener('submit', async e => {
       e.preventDefault();
-      status.textContent = "";
-      const name = document.getElementById("userName").value.trim();
-      const note = document.getElementById("specialRequest").value.trim();
+      status.textContent = '';
+      const name = document.getElementById('userName').value.trim();
+      const note = document.getElementById('specialRequest').value.trim();
       if (!name || !selected) {
-        status.textContent = "יש להזין שם ולבחור משקה";
+        status.textContent = 'יש להזין שם ולבחור משקה';
         return;
       }
 
       const { error } = await sb
-        .from("orders")
-        .insert({ name, beverage: selected, special_request: note, status: "pending" })
+        .from('orders')
+        .insert({ name, beverage: selected, special_request: note, status: 'pending' });
 
       if (error) {
         console.error(error);
-        status.textContent = "❌ שגיאה בשמירה";
+        status.textContent = '❌ שגיאה בשמירה';
       } else {
-        status.textContent = "✅ נשמר!";
+        status.textContent = '✅ נשמר!';
         form.reset();
-        cards.forEach(x => x.classList.remove("selected"));
+        cards.forEach(x => x.classList.remove('selected'));
         selected = null;
         refresh();
       }
     });
 
-    // Delete all (admin)
-    delBtn.addEventListener("click", async () => {
-      if (prompt("קוד מחיקה") !== "1707") return;
-      const { error } = await sb.from("orders").delete().neq("id", 0);
+    // מחיקת כל ההזמנות (admin)
+    delBtn.addEventListener('click', async () => {
+      if (prompt('קוד מחיקה') !== '1707') return;
+      const { error } = await sb.from('orders').delete().neq('id', 0);
       if (error) console.error(error);
       refresh();
     });
 
-    // Load & render the queue
+    // טעינה ועדכון תור
     async function refresh() {
       const { data, error } = await sb
-        .from("orders")
-        .select("*")
-        .order("id", { ascending: false });
+        .from('orders')
+        .select('*')
+        .order('id', { ascending: false });
 
       if (error) {
         console.error(error);
-        list.innerHTML = "<li>שגיאה בטעינת ההזמנות</li>";
+        list.innerHTML = '<li>שגיאה בטעינת ההזמנות</li>';
+        return;
+      }
+      if (!data.length) {
+        list.innerHTML = '<li>אין הזמנות</li>';
         return;
       }
 
-      // If no rows, show "אין הזמנות", else clear
-      list.innerHTML = (data && data.length) ? "" : "<li>אין הזמנות</li>";
-
+      list.innerHTML = '';
       data.forEach(o => {
-        const li = document.createElement("li");
-        if (o.status === "completed") li.classList.add("completed");
+        const li = document.createElement('li');
+        if (o.status === 'completed') li.classList.add('completed');
 
         li.innerHTML = `
           <span class="order-info">
-            ${new Date(o.created_at || Date.now()).toLocaleTimeString("he-IL", { hour:'2-digit', minute:'2-digit' })}
+            ${new Date(o.created_at || Date.now()).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}
             – ${o.name}: ${o.beverage}
-            ${o.special_request ? `(בקשה: ${o.special_request})` : ""}
+            ${o.special_request ? `(בקשה: ${o.special_request})` : ''}
           </span>
-          <input type="checkbox" class="order-check" ${o.status === "completed" ? "checked" : ""}>
+          <input type="checkbox" class="order-check" ${o.status === 'completed' ? 'checked' : ''}>
         `;
 
-        const chk = li.querySelector("input");
-        chk.addEventListener("change", async e => {
-          const newStatus = e.target.checked ? "completed" : "pending";
+        const chk = li.querySelector('input');
+        chk.addEventListener('change', async e => {
+          const newStatus = e.target.checked ? 'completed' : 'pending';
           const { error } = await sb
-            .from("orders")
+            .from('orders')
             .update({ status: newStatus })
-            .eq("id", o.id);
+            .eq('id', o.id);
           if (error) console.error(error);
         });
 
@@ -187,15 +189,15 @@
       });
     }
 
-    // Initial load + realtime updates
+    // התחלת טעינה + רילטיים
     refresh();
-    sb.channel("orders_stream")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, refresh)
+    sb.channel('orders_stream')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, refresh)
       .subscribe();
 
-    // Register PWA service worker
+    // רישום Service Worker ל-PWA
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register("./service-worker.js").catch(console.error);
+      navigator.serviceWorker.register('./service-worker.js').catch(console.error);
     }
   </script>
 </body>
