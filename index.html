@@ -81,6 +81,11 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
         }
         
         .menu-item:hover {
@@ -93,6 +98,18 @@
             background: #6f4e37;
             color: white;
             border-color: #6f4e37;
+        }
+        
+        .menu-item img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+        
+        .menu-item h3 {
+            margin: 0;
+            font-size: 1.2em;
         }
         
         .order-form {
@@ -282,24 +299,24 @@
             <h2 style="color: #6f4e37; margin-bottom: 20px;">בחר משקה</h2>
             <div class="menu-grid">
                 <div class="menu-item" data-product="אספרסו">
+                    <img src="./espresso.png" alt="אספרסו">
                     <h3>אספרסו</h3>
-                    <p>קפה חזק וטעים</p>
                 </div>
                 <div class="menu-item" data-product="מקיאטו">
+                    <img src="./macchiatoIcon.png" alt="מקיאטו">
                     <h3>מקיאטו</h3>
-                    <p>אספרסו עם קצף חלב</p>
                 </div>
                 <div class="menu-item" data-product="הפוך הבית">
+                    <img src="./cappuccinoIcon.png" alt="הפוך הבית">
                     <h3>הפוך הבית</h3>
-                    <p>הקפה המיוחד שלנו</p>
                 </div>
                 <div class="menu-item" data-product="אמריקנו">
+                    <img src="./americanoIcon.png" alt="אמריקנו">
                     <h3>אמריקנו</h3>
-                    <p>אספרסו עם מים חמים</p>
                 </div>
                 <div class="menu-item" data-product="תה">
+                    <img src="./teaIcon.png" alt="תה">
                     <h3>תה</h3>
-                    <p>תה חם ומרגיע</p>
                 </div>
             </div>
         </div>
