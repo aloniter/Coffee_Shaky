@@ -461,3 +461,272 @@
         }
         
         function attemptReconnect() {
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                console.log(`Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+                
+                setTimeout(() => {
+                    setupRealtime();
+                }, 2000 * reconnectAttempts); // Exponential backoff
+            } else {
+                console.error('Max reconnection attempts reached');
+                showError('אבדה הקישוריות לשרת. אנא רענן את הדף.');
+            }
+        }
+        
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.textContent = 'מחובר לשרת ✓';
+                statusElement.className = 'connection-status connected';
+            } else {
+                statusElement.textContent = 'לא מחובר לשרת ✗';
+                statusElement.className = 'connection-status disconnected';
+            }
+        }
+        
+        async function submitOrder() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const specialRequest = document.getElementById('specialRequest').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (!customerName) {
+                alert('אנא הכנס שם לקוח');
+                return;
+            }
+            
+            if (!selectedProduct) {
+                alert('אנא בחר משקה');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'מזמין...';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('coffee_orders')
+                    .insert([{
+                        product_name: selectedProduct,
+                        customer_name: customerName,
+                        special_request: specialRequest || '',
+                        status: 'pending'
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                // Reset form
+                cancelOrder();
+                showSuccess('ההזמנה נשלחה בהצלחה!');
+                
+            } catch (error) {
+                console.error('Error submitting order:', error);
+                showError('שגיאה בשליחת ההזמנה');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'הזמן משקה';
+            }
+        }
+        
+        function cancelOrder() {
+            document.getElementById('orderForm').style.display = 'none';
+            document.getElementById('customerName').value = '';
+            document.getElementById('specialRequest').value = '';
+            selectedProduct = null;
+            
+            // Remove selection from menu items
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+        
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                const { error } = await supabase
+                    .from('coffee_orders')
+                    .update({ status: newStatus })
+                    .eq('id', orderId);
+                
+                if (error) throw error;
+                
+            } catch (error) {
+                console.error('Error updating order status:', error);
+                showError('שגיאה בעדכון סטטוס ההזמנה');
+            }
+        }
+        
+        async function deleteOrder(orderId) {
+            if (!confirm('האם אתה בטוח שברצונך למחוק הזמנה זו?')) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('coffee_orders')
+                    .delete()
+                    .eq('id', orderId);
+                
+                if (error) throw error;
+                
+            } catch (error) {
+                console.error('Error deleting order:', error);
+                showError('שגיאה במחיקת ההזמנה');
+            }
+        }
+        
+        async function clearAllOrders() {
+            if (!confirm('האם אתה בטוח שברצונך למחוק את כל ההזמנות?')) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('coffee_orders')
+                    .delete()
+                    .neq('id', 0); // Delete all records
+                
+                if (error) throw error;
+                
+                showSuccess('כל ההזמנות נמחקו בהצלחה');
+                
+            } catch (error) {
+                console.error('Error clearing orders:', error);
+                showError('שגיאה במחיקת ההזמנות');
+            }
+        }
+        
+        function renderOrders() {
+            const container = document.getElementById('ordersContainer');
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="loading">אין הזמנות כרגע</div>';
+                return;
+            }
+            
+            // Group orders by status
+            const ordersByStatus = {
+                pending: orders.filter(order => order.status === 'pending'),
+                preparing: orders.filter(order => order.status === 'preparing'),
+                ready: orders.filter(order => order.status === 'ready'),
+                completed: orders.filter(order => order.status === 'completed')
+            };
+            
+            const statusLabels = {
+                pending: 'ממתין',
+                preparing: 'בהכנה',
+                ready: 'מוכן',
+                completed: 'הושלם'
+            };
+            
+            const statusClasses = {
+                pending: 'pending-column',
+                preparing: 'preparing-column',
+                ready: 'ready-column',
+                completed: 'completed-column'
+            };
+            
+            let html = '<div class="orders-grid">';
+            
+            Object.keys(ordersByStatus).forEach(status => {
+                html += `
+                    <div class="status-column ${statusClasses[status]}">
+                        <h3>${statusLabels[status]} (${ordersByStatus[status].length})</h3>
+                        ${ordersByStatus[status].map(order => renderOrderCard(order)).join('')}
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function renderOrderCard(order) {
+            const createdAt = new Date(order.created_at);
+            const timeString = createdAt.toLocaleTimeString('he-IL', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const statusActions = getStatusActions(order.status, order.id);
+            
+            return `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">#${order.id}</span>
+                        <span class="order-time">${timeString}</span>
+                    </div>
+                    <div class="order-details">
+                        <strong>${order.product_name}</strong><br>
+                        לקוח: ${order.customer_name}<br>
+                        ${order.special_request ? `בקשה מיוחדת: ${order.special_request}<br>` : ''}
+                    </div>
+                    <div class="order-actions">
+                        ${statusActions}
+                        <button class="btn btn-danger btn-sm" onclick="deleteOrder(${order.id})">
+                            מחק
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getStatusActions(currentStatus, orderId) {
+            const actions = [];
+            
+            switch (currentStatus) {
+                case 'pending':
+                    actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus(${orderId}, 'preparing')">התחל הכנה</button>`);
+                    break;
+                case 'preparing':
+                    actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus(${orderId}, 'ready')">סמן כמוכן</button>`);
+                    break;
+                case 'ready':
+                    actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus(${orderId}, 'completed')">סמן כהושלם</button>`);
+                    break;
+            }
+            
+            return actions.join('');
+        }
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = 'background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 10px 0;';
+            successDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(successDiv, container.firstChild);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
