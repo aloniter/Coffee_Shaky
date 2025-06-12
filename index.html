@@ -121,9 +121,8 @@
             transform: scale(1.1);
         }
         
-        /* --- הוספת כלל חדש וספציפי לאייקון האספרסו --- */
         .menu-item[data-product="אספרסו"] img {
-            width: 85px;  /* הגדלה קלה כדי להתאים לשאר */
+            width: 85px; 
             height: 85px;
         }
         
@@ -340,6 +339,10 @@
                     <h3>תה</h3>
                     <img src="./teaIcon.png" alt="תה">
                 </div>
+                <div class="menu-item" data-product="אחר">
+                    <h3>אחר</h3>
+                    <img src="./otherIcon.png" alt="אחר">
+                </div>
             </div>
         </div>
 
@@ -413,19 +416,30 @@
             }
         }
         
+        // --- שינוי לוגיקה כדי לתמוך באפשרות "אחר" ---
         function setupMenuSelection() {
             const menuItems = document.querySelectorAll('.menu-item');
+            const specialRequestInput = document.getElementById('specialRequest');
+            const customerNameInput = document.getElementById('customerName');
+
             menuItems.forEach(item => {
                 item.addEventListener('click', function() {
-                    // Remove selection from all items
                     menuItems.forEach(i => i.classList.remove('selected'));
-                    // Add selection to clicked item
                     this.classList.add('selected');
                     
                     selectedProduct = this.dataset.product;
                     document.getElementById('selectedProduct').value = selectedProduct;
                     document.getElementById('orderForm').style.display = 'block';
-                    document.getElementById('customerName').focus();
+                    
+                    if (selectedProduct === 'אחר') {
+                        // אם המשתמש בחר "אחר", נשנה את ההנחיה ונעביר את הפוקוס לשדה הבקשות
+                        specialRequestInput.placeholder = 'נא לפרט כאן את ההזמנה...';
+                        specialRequestInput.focus();
+                    } else {
+                        // אם נבחר פריט רגיל, נחזיר את ההנחיה המקורית ונעביר פוקוס לשם הלקוח
+                        specialRequestInput.placeholder = "סוכר נוסף, חלב סויה, וכו'...";
+                        customerNameInput.focus();
+                    }
                 });
             });
         }
@@ -538,6 +552,12 @@
                 alert('אנא בחר משקה');
                 return;
             }
+
+            // אם נבחר "אחר" אבל שדה הבקשות ריק, נבקש פירוט
+            if (selectedProduct === 'אחר' && !specialRequest) {
+                alert('אנא פרט את הזמנתך בשדה הבקשה המיוחדת.');
+                return;
+            }
             
             submitBtn.disabled = true;
             submitBtn.textContent = 'מזמין...';
@@ -574,7 +594,6 @@
             document.getElementById('specialRequest').value = '';
             selectedProduct = null;
             
-            // Remove selection from menu items
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.classList.remove('selected');
             });
@@ -643,7 +662,6 @@
                 return;
             }
             
-            // Group orders by status
             const ordersByStatus = {
                 pending: orders.filter(order => order.status === 'pending'),
                 preparing: orders.filter(order => order.status === 'preparing'),
