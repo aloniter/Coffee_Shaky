@@ -1,10 +1,10 @@
-const CACHE = "coffee-shaky-cache-v9";
+const CACHE = "coffee-shaky-cache-v10"; // Changed from v9 to v10
 
 const ASSETS = [
     "./",
     "./index.html",
     "./manifest.json",
-    "./service-worker.js",
+    "./appicon.png", // Added app icon to cache
     "./espresso.png",
     "./macchiatoIcon.png",
     "./cappuccinoIcon.png",
@@ -23,7 +23,7 @@ self.addEventListener("activate", e => {
     e.waitUntil(
         caches.keys().then(keys =>
             Promise.all(
-                keys.filter(key => key !== CACHE)
+                keys.filter(key => key !== CACHE) // Deletes any cache that is not the new one
                     .map(key => caches.delete(key))
             )
         )
@@ -36,11 +36,14 @@ self.addEventListener("fetch", e => {
     
     e.respondWith(
         caches.match(e.request).then(cached => {
+            // Serve from cache if available
             if (cached) {
                 return cached;
             }
             
+            // Otherwise, fetch from network
             return fetch(e.request).then(response => {
+                // If fetch is successful, clone it and add to cache
                 if (response.status === 200) {
                     const clone = response.clone();
                     caches.open(CACHE).then(cache => {
@@ -49,7 +52,7 @@ self.addEventListener("fetch", e => {
                 }
                 return response;
             }).catch(() => {
-                // Return offline page or cached version if available
+                // If network fails, return the main page
                 return caches.match('./index.html');
             });
         })
