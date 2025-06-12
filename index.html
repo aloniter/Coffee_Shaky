@@ -415,6 +415,29 @@
                 flex: none;
             }
         }
+
+        /* Debug Panel for errors */
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            display: none;
+        }
+
+        .debug-panel.visible {
+            display: block;
+        }
+
+        .debug-panel .debug-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -440,6 +463,12 @@
                 </form>
                 
                 <button id="clear-orders" class="clear-button">🗑️ מחק את כל ההזמנות</button>
+
+                <!-- Debug panel for errors -->
+                <div id="debug-panel" class="debug-panel">
+                    <div class="debug-title">שגיאות מערכת:</div>
+                    <div id="debug-content"></div>
+                </div>
             </section>
             
             <section class="queue-section">
@@ -455,302 +484,407 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
+        // For debugging
+        const debugPanel = document.getElementById('debug-panel');
+        const debugContent = document.getElementById('debug-content');
+        
+        function showDebugMessage(message, isError = false) {
+            console.log(message);
+            debugPanel.classList.add('visible');
+            const logItem = document.createElement('div');
+            logItem.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            if (isError) {
+                logItem.style.color = '#dc3545';
+            }
+            debugContent.appendChild(logItem);
+        }
+
         // Initialize Supabase client with your project URL and anon key
         const supabaseUrl = 'https://txnorybrbgmwzoibrode.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk';
         
-        // Using destructuring to get createClient from the global supabase object
-        const { createClient } = supabase;
-        const supabaseClient = createClient(supabaseUrl, supabaseKey, {
-            realtime: {
-                params: {
-                    eventsPerSecond: 10
-                }
+        try {
+            // Using destructuring to get createClient from the global supabase object
+            if (typeof supabase === 'undefined') {
+                throw new Error('Supabase CDN not loaded properly. Please check your internet connection.');
             }
-        });
-
-        class CoffeeOrderApp {
-            constructor() {
-                this.orders = [];
-                this.selectedProduct = null;
-                this.orderQueue = document.getElementById('order-queue');
-                this.orderForm = document.getElementById('order-form');
-                this.realtimeChannel = null;
-                this.init();
+            
+            const { createClient } = supabase;
+            if (typeof createClient !== 'function') {
+                throw new Error('createClient is not available. Make sure Supabase CDN is loaded properly.');
             }
-
-            async init() {
-                this.setupEventListeners();
-                await this.loadExistingOrders();
-                this.subscribeToRealtime();
-            }
-
-            setupEventListeners() {
-                const coffeeButtons = document.querySelectorAll('.coffee-option');
-                
-                // Coffee option selection
-                coffeeButtons.forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        this.selectCoffee(e.target.textContent);
-                    });
-                });
-
-                // Form submission
-                if (this.orderForm) {
-                    this.orderForm.addEventListener('submit', (e) => {
-                        e.preventDefault();
-                        this.submitOrder();
-                    });
+            
+            showDebugMessage('Supabase CDN loaded successfully');
+            
+            const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+                realtime: {
+                    params: {
+                        eventsPerSecond: 10
+                    }
                 }
+            });
+            
+            showDebugMessage('Supabase client initialized successfully');
 
-                // Clear all orders
-                const clearButton = document.querySelector('#clear-orders');
-                if (clearButton) {
-                    clearButton.addEventListener('click', () => {
-                        this.clearAllOrders();
-                    });
-                }
-            }
-
-            selectCoffee(productName) {
-                document.querySelectorAll('.coffee-option').forEach(btn => {
-                    btn.classList.remove('selected');
-                });
-                event.target.classList.add('selected');
-                this.selectedProduct = productName;
-            }
-
-            async submitOrder() {
-                if (!this.selectedProduct) {
-                    alert('בבקשה בחר משקה'); // "Please select a drink" in Hebrew
-                    return;
-                }
-
-                const customerName = document.querySelector('#customer-name').value.trim();
-                if (!customerName) {
-                    alert('בבקשה הכנס שם'); // "Please enter name" in Hebrew
-                    return;
-                }
-
-                const specialRequest = document.querySelector('#special-request').value.trim();
-
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('coffee_orders')
-                        .insert({
-                            product_name: this.selectedProduct,
-                            customer_name: customerName,
-                            special_request: specialRequest || null,
-                            status: 'pending'
-                        })
-                        .select();
-
-                    if (error) throw error;
-
-                    // Clear form
-                    document.querySelector('#customer-name').value = '';
-                    document.querySelector('#special-request').value = '';
+            class CoffeeOrderApp {
+                constructor() {
+                    this.orders = [];
                     this.selectedProduct = null;
+                    this.orderQueue = document.getElementById('order-queue');
+                    this.orderForm = document.getElementById('order-form');
+                    this.realtimeChannel = null;
+                    this.init();
+                }
+
+                async init() {
+                    try {
+                        this.setupEventListeners();
+                        await this.checkTableExists();
+                        await this.loadExistingOrders();
+                        this.subscribeToRealtime();
+                    } catch (error) {
+                        showDebugMessage(`Initialization error: ${error.message}`, true);
+                    }
+                }
+                
+                async checkTableExists() {
+                    try {
+                        // Try to check if the table exists by querying it
+                        const { count, error } = await supabaseClient
+                            .from('coffee_orders')
+                            .select('*', { count: 'exact', head: true });
+                            
+                        if (error) {
+                            if (error.code === '42P01') {
+                                showDebugMessage('Table coffee_orders does not exist! Please run the database setup SQL first.', true);
+                            } else {
+                                showDebugMessage(`Table check error: ${error.message}`, true);
+                            }
+                            throw error;
+                        }
+                        
+                        showDebugMessage(`Table coffee_orders exists, contains ${count} rows`);
+                        return true;
+                    } catch (error) {
+                        console.error('Table existence check failed:', error);
+                        throw error;
+                    }
+                }
+
+                setupEventListeners() {
+                    const coffeeButtons = document.querySelectorAll('.coffee-option');
+                    
+                    // Coffee option selection
+                    coffeeButtons.forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            this.selectCoffee(e.target.textContent);
+                        });
+                    });
+
+                    // Form submission
+                    if (this.orderForm) {
+                        this.orderForm.addEventListener('submit', (e) => {
+                            e.preventDefault();
+                            this.submitOrder();
+                        });
+                    }
+
+                    // Clear all orders
+                    const clearButton = document.querySelector('#clear-orders');
+                    if (clearButton) {
+                        clearButton.addEventListener('click', () => {
+                            this.clearAllOrders();
+                        });
+                    }
+                }
+
+                selectCoffee(productName) {
                     document.querySelectorAll('.coffee-option').forEach(btn => {
                         btn.classList.remove('selected');
                     });
-
-                    console.log('Order submitted successfully:', data);
-                } catch (error) {
-                    console.error('Error submitting order:', error);
-                    alert('שגיאה בשליחת ההזמנה'); // "Error submitting order" in Hebrew
-                }
-            }
-
-            async loadExistingOrders() {
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('coffee_orders')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-
-                    if (error) throw error;
-
-                    this.orders = data || [];
-                    this.renderOrders();
-                } catch (error) {
-                    console.error('Error loading orders:', error);
-                    this.orderQueue.innerHTML = '<div class="error">שגיאה בטעינת ההזמנות</div>';
-                }
-            }
-
-            subscribeToRealtime() {
-                // Subscribe to all changes on the coffee_orders table
-                this.realtimeChannel = supabaseClient
-                    .channel('coffee-orders-channel')
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: 'INSERT',
-                            schema: 'public',
-                            table: 'coffee_orders'
-                        },
-                        (payload) => {
-                            console.log('New order received:', payload.new);
-                            this.orders.unshift(payload.new);
-                            this.renderOrders();
-                            this.showNewOrderNotification(payload.new);
-                        }
-                    )
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: 'UPDATE',
-                            schema: 'public',
-                            table: 'coffee_orders'
-                        },
-                        (payload) => {
-                            console.log('Order updated:', payload.new);
-                            const index = this.orders.findIndex(order => order.id === payload.new.id);
-                            if (index !== -1) {
-                                this.orders[index] = payload.new;
-                                this.renderOrders();
-                            }
-                        }
-                    )
-                    .on(
-                        'postgres_changes',
-                        {
-                            event: 'DELETE',
-                            schema: 'public',
-                            table: 'coffee_orders'
-                        },
-                        (payload) => {
-                            console.log('Order deleted:', payload.old);
-                            this.orders = this.orders.filter(order => order.id !== payload.old.id);
-                            this.renderOrders();
-                        }
-                    )
-                    .subscribe((status) => {
-                        console.log('Realtime subscription status:', status);
-                    });
-            }
-
-            renderOrders() {
-                if (!this.orderQueue) return;
-
-                if (this.orders.length === 0) {
-                    this.orderQueue.innerHTML = '<div class="no-orders">אין הזמנות כרגע</div>';
-                    return;
+                    event.target.classList.add('selected');
+                    this.selectedProduct = productName;
                 }
 
-                const ordersHTML = this.orders.map(order => `
-                    <div class="order-item" data-status="${order.status}">
-                        <div class="order-header">
-                            <span class="order-id">#${order.id}</span>
-                            <span class="order-time">${new Date(order.created_at).toLocaleTimeString('he-IL')}</span>
-                        </div>
-                        <div class="order-details">
-                            <strong>${order.customer_name}</strong> - ${order.product_name}
-                            ${order.special_request ? `<br><em>בקשה מיוחדת: ${order.special_request}</em>` : ''}
-                        </div>
-                        <div class="order-status status-${order.status}">
-                            ${this.getStatusText(order.status)}
-                        </div>
-                        <div class="order-actions">
-                            <button onclick="app.updateOrderStatus(${order.id}, 'preparing')" class="btn-preparing">בהכנה</button>
-                            <button onclick="app.updateOrderStatus(${order.id}, 'ready')" class="btn-ready">מוכן</button>
-                            <button onclick="app.updateOrderStatus(${order.id}, 'completed')" class="btn-completed">הושלם</button>
-                        </div>
-                    </div>
-                `).join('');
+                async submitOrder() {
+                    if (!this.selectedProduct) {
+                        alert('בבקשה בחר משקה'); // "Please select a drink" in Hebrew
+                        return;
+                    }
 
-                this.orderQueue.innerHTML = ordersHTML;
-            }
+                    const customerName = document.querySelector('#customer-name').value.trim();
+                    if (!customerName) {
+                        alert('בבקשה הכנס שם'); // "Please enter name" in Hebrew
+                        return;
+                    }
 
-            getStatusText(status) {
-                const statusMap = {
-                    'pending': 'ממתין',
-                    'preparing': 'בהכנה',
-                    'ready': 'מוכן',
-                    'completed': 'הושלם'
-                };
-                return statusMap[status] || status;
-            }
+                    const specialRequest = document.querySelector('#special-request').value.trim();
 
-            async updateOrderStatus(orderId, newStatus) {
-                try {
-                    const { error } = await supabaseClient
-                        .from('coffee_orders')
-                        .update({ 
-                            status: newStatus,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('id', orderId);
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from('coffee_orders')
+                            .insert({
+                                product_name: this.selectedProduct,
+                                customer_name: customerName,
+                                special_request: specialRequest || null,
+                                status: 'pending'
+                            })
+                            .select();
 
-                    if (error) throw error;
+                        if (error) {
+                            showDebugMessage(`Order submission error: ${error.message}`, true);
+                            throw error;
+                        }
+
+                        // Clear form
+                        document.querySelector('#customer-name').value = '';
+                        document.querySelector('#special-request').value = '';
+                        this.selectedProduct = null;
+                        document.querySelectorAll('.coffee-option').forEach(btn => {
+                            btn.classList.remove('selected');
+                        });
+
+                        showDebugMessage(`Order submitted successfully: ${JSON.stringify(data)}`);
+                    } catch (error) {
+                        console.error('Error submitting order:', error);
+                        alert('שגיאה בשליחת ההזמנה'); // "Error submitting order" in Hebrew
+                    }
+                }
+
+                async loadExistingOrders() {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from('coffee_orders')
+                            .select('*')
+                            .order('created_at', { ascending: false });
+
+                        if (error) {
+                            showDebugMessage(`Error loading orders: ${error.message}`, true);
+                            throw error;
+                        }
+
+                        this.orders = data || [];
+                        this.renderOrders();
+                        
+                        showDebugMessage(`Loaded ${this.orders.length} existing orders`);
+                    } catch (error) {
+                        console.error('Error loading orders:', error);
+                        this.orderQueue.innerHTML = '<div class="error">שגיאה בטעינת ההזמנות</div>';
+                    }
+                }
+
+                subscribeToRealtime() {
+                    try {
+                        showDebugMessage('Setting up real-time subscription...');
+                        
+                        // Subscribe to all changes on the coffee_orders table
+                        this.realtimeChannel = supabaseClient
+                            .channel('coffee-orders-channel')
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: 'INSERT',
+                                    schema: 'public',
+                                    table: 'coffee_orders'
+                                },
+                                (payload) => {
+                                    showDebugMessage(`New order received: ${JSON.stringify(payload.new)}`);
+                                    this.orders.unshift(payload.new);
+                                    this.renderOrders();
+                                    this.showNewOrderNotification(payload.new);
+                                }
+                            )
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: 'UPDATE',
+                                    schema: 'public',
+                                    table: 'coffee_orders'
+                                },
+                                (payload) => {
+                                    showDebugMessage(`Order updated: ${JSON.stringify(payload.new)}`);
+                                    const index = this.orders.findIndex(order => order.id === payload.new.id);
+                                    if (index !== -1) {
+                                        this.orders[index] = payload.new;
+                                        this.renderOrders();
+                                    }
+                                }
+                            )
+                            .on(
+                                'postgres_changes',
+                                {
+                                    event: 'DELETE',
+                                    schema: 'public',
+                                    table: 'coffee_orders'
+                                },
+                                (payload) => {
+                                    showDebugMessage(`Order deleted: ${JSON.stringify(payload.old)}`);
+                                    this.orders = this.orders.filter(order => order.id !== payload.old.id);
+                                    this.renderOrders();
+                                }
+                            )
+                            .subscribe((status) => {
+                                showDebugMessage(`Realtime subscription status: ${status}`);
+                                
+                                if (status === 'SUBSCRIBED') {
+                                    showDebugMessage('Real-time subscription active - your app is ready!');
+                                } else if (status === 'CHANNEL_ERROR') {
+                                    showDebugMessage('Real-time subscription failed - check Supabase dashboard replication settings', true);
+                                }
+                            });
+                    } catch (error) {
+                        showDebugMessage(`Real-time subscription error: ${error.message}`, true);
+                        console.error('Realtime subscription error:', error);
+                    }
+                }
+
+                renderOrders() {
+                    if (!this.orderQueue) return;
+
+                    if (this.orders.length === 0) {
+                        this.orderQueue.innerHTML = '<div class="no-orders">אין הזמנות כרגע</div>';
+                        return;
+                    }
+
+                    const ordersHTML = this.orders.map(order => `
+                        <div class="order-item" data-status="${order.status}">
+                            <div class="order-header">
+                                <span class="order-id">#${order.id}</span>
+                                <span class="order-time">${new Date(order.created_at).toLocaleTimeString('he-IL')}</span>
+                            </div>
+                            <div class="order-details">
+                                <strong>${order.customer_name}</strong> - ${order.product_name}
+                                ${order.special_request ? `<br><em>בקשה מיוחדת: ${order.special_request}</em>` : ''}
+                            </div>
+                            <div class="order-status status-${order.status}">
+                                ${this.getStatusText(order.status)}
+                            </div>
+                            <div class="order-actions">
+                                <button onclick="app.updateOrderStatus(${order.id}, 'preparing')" class="btn-preparing">בהכנה</button>
+                                <button onclick="app.updateOrderStatus(${order.id}, 'ready')" class="btn-ready">מוכן</button>
+                                <button onclick="app.updateOrderStatus(${order.id}, 'completed')" class="btn-completed">הושלם</button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    this.orderQueue.innerHTML = ordersHTML;
+                }
+
+                getStatusText(status) {
+                    const statusMap = {
+                        'pending': 'ממתין',
+                        'preparing': 'בהכנה',
+                        'ready': 'מוכן',
+                        'completed': 'הושלם'
+                    };
+                    return statusMap[status] || status;
+                }
+
+                async updateOrderStatus(orderId, newStatus) {
+                    try {
+                        const { error } = await supabaseClient
+                            .from('coffee_orders')
+                            .update({ 
+                                status: newStatus,
+                                updated_at: new Date().toISOString()
+                            })
+                            .eq('id', orderId);
+
+                        if (error) {
+                            showDebugMessage(`Order status update error: ${error.message}`, true);
+                            throw error;
+                        }
+                        
+                        showDebugMessage(`Order ${orderId} status updated to ${newStatus}`);
+                    } catch (error) {
+                        console.error('Error updating order status:', error);
+                        alert('שגיאה בעדכון סטטוס ההזמנה');
+                    }
+                }
+
+                async clearAllOrders() {
+                    if (!confirm('האם אתה בטוח שברצונך למחוק את כל ההזמנות?')) {
+                        return;
+                    }
+
+                    try {
+                        const { error } = await supabaseClient
+                            .from('coffee_orders')
+                            .delete()
+                            .neq('id', 0); // Delete all orders
+
+                        if (error) {
+                            showDebugMessage(`Error clearing orders: ${error.message}`, true);
+                            throw error;
+                        }
+
+                        showDebugMessage('All orders cleared');
+                    } catch (error) {
+                        console.error('Error clearing orders:', error);
+                        alert('שגיאה במחיקת ההזמנות');
+                    }
+                }
+
+                showNewOrderNotification(order) {
+                    // Create a temporary notification
+                    const notification = document.createElement('div');
+                    notification.className = 'new-order-notification';
+                    notification.innerHTML = `הזמנה חדשה: ${order.customer_name} - ${order.product_name}`;
+                    document.body.appendChild(notification);
                     
-                    console.log(`Order ${orderId} status updated to ${newStatus}`);
-                } catch (error) {
-                    console.error('Error updating order status:', error);
-                    alert('שגיאה בעדכון סטטוס ההזמנה');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                }
+
+                // Cleanup method
+                destroy() {
+                    if (this.realtimeChannel) {
+                        this.realtimeChannel.unsubscribe();
+                    }
                 }
             }
 
-            async clearAllOrders() {
-                if (!confirm('האם אתה בטוח שברצונך למחוק את כל ההזמנות?')) {
-                    return;
+            // Initialize the app when DOM is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                window.app = new CoffeeOrderApp();
+            });
+
+            // Cleanup when page unloads
+            window.addEventListener('beforeunload', () => {
+                if (window.app) {
+                    window.app.destroy();
                 }
-
-                try {
-                    const { error } = await supabaseClient
-                        .from('coffee_orders')
-                        .delete()
-                        .neq('id', 0); // Delete all orders
-
-                    if (error) throw error;
-
-                    console.log('All orders cleared');
-                } catch (error) {
-                    console.error('Error clearing orders:', error);
-                    alert('שגיאה במחיקת ההזמנות');
-                }
-            }
-
-            showNewOrderNotification(order) {
-                // Create a temporary notification
-                const notification = document.createElement('div');
-                notification.className = 'new-order-notification';
-                notification.innerHTML = `הזמנה חדשה: ${order.customer_name} - ${order.product_name}`;
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-
-            // Cleanup method
-            destroy() {
-                if (this.realtimeChannel) {
-                    this.realtimeChannel.unsubscribe();
-                }
-            }
+            });
+            
+        } catch (error) {
+            // Handle any initialization errors
+            showDebugMessage(`Initialization error: ${error.message}`, true);
+            console.error('Initialization error:', error);
+            
+            // Display user-friendly error
+            document.getElementById('order-queue').innerHTML = `
+                <div class="error">
+                    <p>שגיאה באתחול האפליקציה</p>
+                    <p>${error.message}</p>
+                    <p>אנא בדוק את המסוף לפרטים נוספים</p>
+                </div>
+            `;
         }
-
-        // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            window.app = new CoffeeOrderApp();
-        });
-
-        // Cleanup when page unloads
-        window.addEventListener('beforeunload', () => {
-            if (window.app) {
-                window.app.destroy();
-            }
-        });
     </script>
 
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./service-worker.js')
-                .then(registration => console.log('SW registered:', registration))
-                .catch(error => console.log('SW registration failed:', error));
+                .then(registration => {
+                    console.log('SW registered:', registration);
+                    showDebugMessage('Service Worker registered successfully');
+                })
+                .catch(error => {
+                    console.log('SW registration failed:', error);
+                    showDebugMessage(`Service Worker registration failed: ${error.message}`, true);
+                });
         }
     </script>
 </body>
