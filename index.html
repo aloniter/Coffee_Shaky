@@ -1,3 +1,17 @@
+Excellent! I'm glad the application is working better for you. Adding the names back under the icons is a great idea for clarity.
+
+Just to confirm, the names I will add back under each icon are the ones from the original code:
+* **אספרסו**
+* **מקיאטו**
+* **הפוך הבית**
+* **אמריקנו**
+* **תה**
+
+I will now provide the updated `index.html` file. The main change is in the CSS: I will remove the rule that was hiding the names and add some styling to make them look clean and well-aligned with the icons.
+
+Here is the complete and final `index.html` code:
+
+```html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -103,23 +117,30 @@
             border-color: #6f4e37;
         }
         .menu-item.selected img {
-            filter: brightness(0) invert(1); /* Changes icon to white when selected */
+            filter: brightness(0) invert(1);
         }
         
+        .menu-item.selected h3 {
+            color: white;
+        }
+
         .menu-item img {
             width: 80px;
             height: 80px;
-            margin-bottom: 0;
             object-fit: contain;
             transition: transform 0.2s ease;
+            margin-bottom: 15px; /* Added space between icon and text */
         }
 
         .menu-item:hover img {
             transform: scale(1.1);
         }
         
+        /* This rule now styles the visible text instead of hiding it */
         .menu-item h3 {
-            display: none; /* Hides the text label */
+            font-size: 1em;
+            color: #6f4e37;
+            font-weight: 600;
         }
         
         .order-form {
@@ -744,3 +765,4 @@
     </script>
 </body>
 </html>
+```
