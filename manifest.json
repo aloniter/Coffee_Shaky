@@ -1,10 +1,18 @@
 {
-  "name": "Coffee Shaky",
-  "short_name": "Shaky ☕",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#fdf6f0",
-  "theme_color": "#6f4e37",
-  "lang": "he",
-  "icons": []
+    "name": "Coffee Shaky - Real-time Orders",
+    "short_name": "Coffee Shaky ☕",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#fdf6f0",
+    "theme_color": "#6f4e37",
+    "lang": "he",
+    "description": "Real-time coffee ordering system",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "./espresso.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ]
 }
