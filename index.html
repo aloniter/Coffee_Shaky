@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coffee Shaky ☕</title>
 
-    <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="appicon.png">
     <link rel="apple-touch-icon" href="appicon.png">
+
     <style>
         * {
             margin: 0;
@@ -740,19 +740,6 @@
             setTimeout(() => {
                 successDiv.remove();
             }, 3000);
-        }
-        
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
         }
     </script>
 </body>
