@@ -99,18 +99,20 @@
             color: white;
             border-color: #6f4e37;
         }
+.menu-item.selected img {
+    filter: brightness(0) invert(1); /* האייקון נהיה לבן כשהוא נבחר */
+}
         
         .menu-item img {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 10px;
-            object-fit: contain;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 0;
+    object-fit: contain;
         }
         
         .menu-item h3 {
-            margin: 0;
-            font-size: 1.2em;
-        }
+    display: none; /* מסתיר את הכיתוב */
+}
         
         .order-form {
             background: white;
