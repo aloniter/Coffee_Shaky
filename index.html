@@ -1,10 +1,10 @@
-Excellent! Placing the names above the icons is a great design choice.
+בטח, הבנתי. אתה רוצה להוסיף את שמות המשקאות כך שיופיעו מעל האייקונים התואמים להם.
 
-I will modify the `index.html` file by making two main changes:
-1.  **HTML:** I will change the order of the coffee name and the icon in the code, so the name appears first.
-2.  **CSS:** I will adjust the spacing so the text looks good above the icon and uses the beautiful brown color (`#6f4e37`) from your theme.
+אני אבצע שני שינויים בקוד כדי להשיג את התוצאה הזו:
+1.  **ב-HTML:** אני אמקם את השם (תגית `<h3>`) לפני התמונה (תגית `<img>`) עבור כל פריט בתפריט.
+2.  **ב-CSS:** אני אוודא שיש רווח מתאים בין השם לתמונה, ושהטקסט צבוע בצבע חום שמתאים לעיצוב.
 
-Here is the complete, updated code for your `index.html` file.
+הנה קוד ה-`index.html` המלא והמעודכן עם השינויים שביקשת:
 
 ```html
 <!DOCTYPE html>
@@ -120,8 +120,8 @@ Here is the complete, updated code for your `index.html` file.
         }
 
         .menu-item img {
-            width: 70px;  /* Adjusted size for balance */
-            height: 70px; /* Adjusted size for balance */
+            width: 70px;
+            height: 70px;
             object-fit: contain;
             transition: transform 0.2s ease;
         }
@@ -132,9 +132,9 @@ Here is the complete, updated code for your `index.html` file.
         
         .menu-item h3 {
             font-size: 1.1em;
-            color: #6f4e37; /* The beautiful brown color */
+            color: #6f4e37;
             font-weight: 600;
-            margin-bottom: 10px; /* Added space between text and icon */
+            margin-bottom: 10px; /* יצירת רווח בין הטקסט לאייקון */
         }
         
         .order-form {
