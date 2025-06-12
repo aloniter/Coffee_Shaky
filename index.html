@@ -1,204 +1,757 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Coffee Shaky</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Shaky ☕</title>
+    <link rel="manifest" href="./manifest.json">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <!-- Manifest (ללא icons) -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#6f4e37">
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fdf6f0 0%, #f5e6d3 100%);
+            min-height: 100vh;
+            direction: rtl;
+            color: #333;
+        }
 
-  <style>
-  /* ——— בסיס ——— */
-  body{margin:0;padding:0;direction:rtl;background:#fdf6f0;font-family:sans-serif;color:#4e342e}
-  .container{max-width:800px;margin:30px auto;background:#fff;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.1);padding:30px}
-  h1{text-align:center;color:#6f4e37;margin:0}
+        .app {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
 
-  /* ——— כרטיסי קפה ——— */
-  .coffee-options{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;margin:25px 0}
-  .coffee-card{background:#faf3ee;border:2px solid transparent;border-radius:10px;width:150px;text-align:center;cursor:pointer;padding:15px;transition:.3s}
-  .coffee-card:hover{transform:translateY(-5px)}
-  .coffee-card.selected{border-color:#6f4e37}
-  .coffee-icon{width:55px;height:55px;margin:0 auto 8px}
-  .coffee-icon img{width:100%;height:100%;object-fit:contain}
-  [data-coffee="אספרסו"] .coffee-icon img{transform:scale(1.25);margin-top:-3px}
+        /* Header Styles */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-  /* ——— טופס ——— */
-  .form-group{margin-bottom:15px}
-  input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:1em}
-  textarea{resize:vertical;min-height:60px}
-  button{padding:12px;background:#6f4e37;color:#fff;border:none;border-radius:6px;font-size:1.05em;cursor:pointer;width:100%}
-  button:hover{background:#5a3e2b}
-  .status{margin-top:6px;font-size:.85em;text-align:center}
+        header h1 {
+            color: #6f4e37;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
 
-  /* ——— תור ——— */
-  .admin-btn{margin:25px auto 8px;padding:8px 18px;border:none;border-radius:6px;background:#b71c1c;color:#fff;cursor:pointer;font-size:.95em;display:block;width:auto}
-  .admin-btn:hover{background:#d32f2f}
-  ul#orderQueue{list-style:none;padding:0;margin:0;max-height:260px;overflow-y:auto;border:1px solid #eee;border-radius:8px}
-  ul#orderQueue li{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #eee}
-  li.completed{text-decoration:line-through;color:#999}
-  .order-info{flex:1}
-  .order-check{margin-left:10px;width:20px;height:20px;cursor:pointer}
-  </style>
+        /* Main Layout */
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        /* Order Section */
+        .order-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Coffee Options */
+        .coffee-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .coffee-option {
+            padding: 15px 20px;
+            background: #f8f4f0;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6f4e37;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .coffee-option:hover {
+            background: #ede4d3;
+            transform: translateY(-2px);
+        }
+
+        .coffee-option.selected {
+            background: #6f4e37;
+            color: white;
+            border-color: #4a3525;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(111, 78, 55, 0.3);
+        }
+
+        /* Order Form */
+        .order-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .order-form input,
+        .order-form textarea {
+            padding: 15px;
+            border: 2px solid #e0d5c7;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: #fafafa;
+        }
+
+        .order-form input:focus,
+        .order-form textarea:focus {
+            outline: none;
+            border-color: #6f4e37;
+            box-shadow: 0 0 0 3px rgba(111, 78, 55, 0.1);
+        }
+
+        .order-form textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        #submit-order {
+            background: #6f4e37;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #submit-order:hover {
+            background: #5a3d2b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(111, 78, 55, 0.3);
+        }
+
+        #submit-order:active {
+            transform: translateY(0);
+        }
+
+        /* Clear Button */
+        .clear-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .clear-button:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        /* Queue Section */
+        .queue-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .queue-section h2 {
+            color: #6f4e37;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        /* Order Queue */
+        .order-queue {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            background: #fafafa;
+            border: 2px solid #f0f0f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .order-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .order-id {
+            font-weight: 700;
+            color: #6f4e37;
+            font-size: 18px;
+        }
+
+        .order-time {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .order-details {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .order-details strong {
+            color: #6f4e37;
+            font-size: 16px;
+        }
+
+        .order-details em {
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* Order Status */
+        .order-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-preparing {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #74c0fc;
+        }
+
+        .status-ready {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #51cf66;
+        }
+
+        .status-completed {
+            background: #e2e3e5;
+            color: #6c757d;
+            border: 1px solid #ced4da;
+        }
+
+        /* Order Actions */
+        .order-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .order-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 70px;
+        }
+
+        .btn-preparing {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-preparing:hover {
+            background: #0056b3;
+        }
+
+        .btn-ready {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-ready:hover {
+            background: #1e7e34;
+        }
+
+        .btn-completed {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-completed:hover {
+            background: #545b62;
+        }
+
+        /* Special States */
+        .no-orders {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 18px;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6f4e37;
+            font-size: 18px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px 20px;
+            color: #dc3545;
+            font-size: 18px;
+        }
+
+        /* New Order Notification */
+        .new-order-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            font-weight: 600;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Scrollbar Styling */
+        .order-queue::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .order-queue::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .order-queue::-webkit-scrollbar-thumb {
+            background: #6f4e37;
+            border-radius: 4px;
+        }
+
+        .order-queue::-webkit-scrollbar-thumb:hover {
+            background: #5a3d2b;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 480px) {
+            .app {
+                padding: 15px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .coffee-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .order-item {
+                padding: 15px;
+            }
+            
+            .order-actions {
+                flex-direction: column;
+            }
+            
+            .order-actions button {
+                flex: none;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Coffee Shaky ☕</h1>
-
-    <!-- כרטיסים -->
-    <div class="coffee-options">
-      <div class="coffee-card" data-coffee="אספרסו">
-        <div class="coffee-icon"><img src="espresso.png" alt="אספרסו"></div>אספרסו
-      </div>
-      <div class="coffee-card" data-coffee="מקיאטו">
-        <div class="coffee-icon"><img src="macchiatoIcon.png" alt="מקיאטו"></div>מקיאטו
-      </div>
-      <div class="coffee-card" data-coffee="הפוך הבית">
-        <div class="coffee-icon"><img src="cappuccinoIcon.png" alt="הפוך הבית"></div>הפוך&nbsp;הבית
-      </div>
-      <div class="coffee-card" data-coffee="אמריקנו">
-        <div class="coffee-icon"><img src="americanoIcon.png" alt="אמריקנו"></div>אמריקנו
-      </div>
-      <div class="coffee-card" data-coffee="תה">
-        <div class="coffee-icon"><img src="teaIcon.png" alt="תה"></div>תה
-      </div>
+    <div class="app">
+        <header>
+            <h1>Coffee Shaky ☕</h1>
+        </header>
+        
+        <main>
+            <section class="order-section">
+                <div class="coffee-options">
+                    <button class="coffee-option" type="button">אספרסו</button>
+                    <button class="coffee-option" type="button">מקיאטו</button>
+                    <button class="coffee-option" type="button">הפוך הבית</button>
+                    <button class="coffee-option" type="button">אמריקנו</button>
+                    <button class="coffee-option" type="button">תה</button>
+                </div>
+                
+                <form id="order-form" class="order-form">
+                    <input type="text" id="customer-name" placeholder="שם:" required>
+                    <textarea id="special-request" placeholder="בקשה מיוחדת (לא חובה):"></textarea>
+                    <button type="submit" id="submit-order">הזמן משקה</button>
+                </form>
+                
+                <button id="clear-orders" class="clear-button">🗑️ מחק את כל ההזמנות</button>
+            </section>
+            
+            <section class="queue-section">
+                <h2>תור ההזמנות</h2>
+                <div id="order-queue" class="order-queue">
+                    <div class="loading">טוען…</div>
+                </div>
+            </section>
+        </main>
     </div>
-
-    <!-- טופס -->
-    <form id="orderForm">
-      <div class="form-group">
-        <label for="userName">שם:</label>
-        <input id="userName" required>
-      </div>
-      <div class="form-group">
-        <label for="specialRequest">בקשה מיוחדת (לא חובה):</label>
-        <textarea id="specialRequest"></textarea>
-      </div>
-      <button type="submit">הזמן משקה</button>
-      <div id="formStatus" class="status"></div>
-    </form>
-
-    <!-- מחיקה + תור -->
-    <button id="deleteAll" class="admin-btn">🗑️ מחק את כל ההזמנות</button>
-    <h2>תור ההזמנות</h2>
-    <ul id="orderQueue"><li>טוען…</li></ul>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-    const sb = createClient(
-      'https://txnorybrbgmwzoibrode.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk'
-    );
-
-    const cards = [...document.querySelectorAll('.coffee-card')];
-    const form = document.getElementById('orderForm');
-    const list = document.getElementById('orderQueue');
-    const status = document.getElementById('formStatus');
-    const delBtn = document.getElementById('deleteAll');
-    let selected = null;
-
-    // לבחור משקה
-    cards.forEach(c => {
-      c.addEventListener('click', () => {
-        cards.forEach(x => x.classList.remove('selected'));
-        c.classList.add('selected');
-        selected = c.dataset.coffee;
-      });
-    });
-
-    // שליחת הזמנה
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      status.textContent = '';
-      const name = document.getElementById('userName').value.trim();
-      const note = document.getElementById('specialRequest').value.trim();
-      if (!name || !selected) {
-        status.textContent = 'יש להזין שם ולבחור משקה';
-        return;
-      }
-
-      const { error } = await sb
-        .from('orders')
-        .insert({ name, beverage: selected, special_request: note, status: 'pending' });
-
-      if (error) {
-        console.error(error);
-        status.textContent = '❌ שגיאה בשמירה';
-      } else {
-        status.textContent = '✅ נשמר!';
-        form.reset();
-        cards.forEach(x => x.classList.remove('selected'));
-        selected = null;
-        refresh();
-      }
-    });
-
-    // מחיקת כל ההזמנות (admin)
-    delBtn.addEventListener('click', async () => {
-      if (prompt('קוד מחיקה') !== '1707') return;
-      const { error } = await sb.from('orders').delete().neq('id', 0);
-      if (error) console.error(error);
-      refresh();
-    });
-
-    // טעינה ועדכון תור
-    async function refresh() {
-      const { data, error } = await sb
-        .from('orders')
-        .select('*')
-        .order('id', { ascending: false });
-
-      if (error) {
-        console.error(error);
-        list.innerHTML = '<li>שגיאה בטעינת ההזמנות</li>';
-        return;
-      }
-      if (!data.length) {
-        list.innerHTML = '<li>אין הזמנות</li>';
-        return;
-      }
-
-      list.innerHTML = '';
-      data.forEach(o => {
-        const li = document.createElement('li');
-        if (o.status === 'completed') li.classList.add('completed');
-
-        li.innerHTML = `
-          <span class="order-info">
-            ${new Date(o.created_at || Date.now()).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}
-            – ${o.name}: ${o.beverage}
-            ${o.special_request ? `(בקשה: ${o.special_request})` : ''}
-          </span>
-          <input type="checkbox" class="order-check" ${o.status === 'completed' ? 'checked' : ''}>
-        `;
-
-        const chk = li.querySelector('input');
-        chk.addEventListener('change', async e => {
-          const newStatus = e.target.checked ? 'completed' : 'pending';
-          const { error } = await sb
-            .from('orders')
-            .update({ status: newStatus })
-            .eq('id', o.id);
-          if (error) console.error(error);
+    
+    <!-- Import Supabase from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Initialize Supabase client with your project URL and anon key
+        const supabaseUrl = 'https://txnorybrbgmwzoibrode.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk';
+        
+        // Using destructuring to get createClient from the global supabase object
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+            realtime: {
+                params: {
+                    eventsPerSecond: 10
+                }
+            }
         });
 
-        list.appendChild(li);
-      });
-    }
+        class CoffeeOrderApp {
+            constructor() {
+                this.orders = [];
+                this.selectedProduct = null;
+                this.orderQueue = document.getElementById('order-queue');
+                this.orderForm = document.getElementById('order-form');
+                this.realtimeChannel = null;
+                this.init();
+            }
 
-    // התחלת טעינה + רילטיים
-    refresh();
-    sb.channel('orders_stream')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, refresh)
-      .subscribe();
+            async init() {
+                this.setupEventListeners();
+                await this.loadExistingOrders();
+                this.subscribeToRealtime();
+            }
 
-    // רישום Service Worker ל-PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js').catch(console.error);
-    }
-  </script>
+            setupEventListeners() {
+                const coffeeButtons = document.querySelectorAll('.coffee-option');
+                
+                // Coffee option selection
+                coffeeButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        this.selectCoffee(e.target.textContent);
+                    });
+                });
+
+                // Form submission
+                if (this.orderForm) {
+                    this.orderForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.submitOrder();
+                    });
+                }
+
+                // Clear all orders
+                const clearButton = document.querySelector('#clear-orders');
+                if (clearButton) {
+                    clearButton.addEventListener('click', () => {
+                        this.clearAllOrders();
+                    });
+                }
+            }
+
+            selectCoffee(productName) {
+                document.querySelectorAll('.coffee-option').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                event.target.classList.add('selected');
+                this.selectedProduct = productName;
+            }
+
+            async submitOrder() {
+                if (!this.selectedProduct) {
+                    alert('בבקשה בחר משקה'); // "Please select a drink" in Hebrew
+                    return;
+                }
+
+                const customerName = document.querySelector('#customer-name').value.trim();
+                if (!customerName) {
+                    alert('בבקשה הכנס שם'); // "Please enter name" in Hebrew
+                    return;
+                }
+
+                const specialRequest = document.querySelector('#special-request').value.trim();
+
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('coffee_orders')
+                        .insert({
+                            product_name: this.selectedProduct,
+                            customer_name: customerName,
+                            special_request: specialRequest || null,
+                            status: 'pending'
+                        })
+                        .select();
+
+                    if (error) throw error;
+
+                    // Clear form
+                    document.querySelector('#customer-name').value = '';
+                    document.querySelector('#special-request').value = '';
+                    this.selectedProduct = null;
+                    document.querySelectorAll('.coffee-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+
+                    console.log('Order submitted successfully:', data);
+                } catch (error) {
+                    console.error('Error submitting order:', error);
+                    alert('שגיאה בשליחת ההזמנה'); // "Error submitting order" in Hebrew
+                }
+            }
+
+            async loadExistingOrders() {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('coffee_orders')
+                        .select('*')
+                        .order('created_at', { ascending: false });
+
+                    if (error) throw error;
+
+                    this.orders = data || [];
+                    this.renderOrders();
+                } catch (error) {
+                    console.error('Error loading orders:', error);
+                    this.orderQueue.innerHTML = '<div class="error">שגיאה בטעינת ההזמנות</div>';
+                }
+            }
+
+            subscribeToRealtime() {
+                // Subscribe to all changes on the coffee_orders table
+                this.realtimeChannel = supabaseClient
+                    .channel('coffee-orders-channel')
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'INSERT',
+                            schema: 'public',
+                            table: 'coffee_orders'
+                        },
+                        (payload) => {
+                            console.log('New order received:', payload.new);
+                            this.orders.unshift(payload.new);
+                            this.renderOrders();
+                            this.showNewOrderNotification(payload.new);
+                        }
+                    )
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'coffee_orders'
+                        },
+                        (payload) => {
+                            console.log('Order updated:', payload.new);
+                            const index = this.orders.findIndex(order => order.id === payload.new.id);
+                            if (index !== -1) {
+                                this.orders[index] = payload.new;
+                                this.renderOrders();
+                            }
+                        }
+                    )
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'DELETE',
+                            schema: 'public',
+                            table: 'coffee_orders'
+                        },
+                        (payload) => {
+                            console.log('Order deleted:', payload.old);
+                            this.orders = this.orders.filter(order => order.id !== payload.old.id);
+                            this.renderOrders();
+                        }
+                    )
+                    .subscribe((status) => {
+                        console.log('Realtime subscription status:', status);
+                    });
+            }
+
+            renderOrders() {
+                if (!this.orderQueue) return;
+
+                if (this.orders.length === 0) {
+                    this.orderQueue.innerHTML = '<div class="no-orders">אין הזמנות כרגע</div>';
+                    return;
+                }
+
+                const ordersHTML = this.orders.map(order => `
+                    <div class="order-item" data-status="${order.status}">
+                        <div class="order-header">
+                            <span class="order-id">#${order.id}</span>
+                            <span class="order-time">${new Date(order.created_at).toLocaleTimeString('he-IL')}</span>
+                        </div>
+                        <div class="order-details">
+                            <strong>${order.customer_name}</strong> - ${order.product_name}
+                            ${order.special_request ? `<br><em>בקשה מיוחדת: ${order.special_request}</em>` : ''}
+                        </div>
+                        <div class="order-status status-${order.status}">
+                            ${this.getStatusText(order.status)}
+                        </div>
+                        <div class="order-actions">
+                            <button onclick="app.updateOrderStatus(${order.id}, 'preparing')" class="btn-preparing">בהכנה</button>
+                            <button onclick="app.updateOrderStatus(${order.id}, 'ready')" class="btn-ready">מוכן</button>
+                            <button onclick="app.updateOrderStatus(${order.id}, 'completed')" class="btn-completed">הושלם</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                this.orderQueue.innerHTML = ordersHTML;
+            }
+
+            getStatusText(status) {
+                const statusMap = {
+                    'pending': 'ממתין',
+                    'preparing': 'בהכנה',
+                    'ready': 'מוכן',
+                    'completed': 'הושלם'
+                };
+                return statusMap[status] || status;
+            }
+
+            async updateOrderStatus(orderId, newStatus) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('coffee_orders')
+                        .update({ 
+                            status: newStatus,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', orderId);
+
+                    if (error) throw error;
+                    
+                    console.log(`Order ${orderId} status updated to ${newStatus}`);
+                } catch (error) {
+                    console.error('Error updating order status:', error);
+                    alert('שגיאה בעדכון סטטוס ההזמנה');
+                }
+            }
+
+            async clearAllOrders() {
+                if (!confirm('האם אתה בטוח שברצונך למחוק את כל ההזמנות?')) {
+                    return;
+                }
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('coffee_orders')
+                        .delete()
+                        .neq('id', 0); // Delete all orders
+
+                    if (error) throw error;
+
+                    console.log('All orders cleared');
+                } catch (error) {
+                    console.error('Error clearing orders:', error);
+                    alert('שגיאה במחיקת ההזמנות');
+                }
+            }
+
+            showNewOrderNotification(order) {
+                // Create a temporary notification
+                const notification = document.createElement('div');
+                notification.className = 'new-order-notification';
+                notification.innerHTML = `הזמנה חדשה: ${order.customer_name} - ${order.product_name}`;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            // Cleanup method
+            destroy() {
+                if (this.realtimeChannel) {
+                    this.realtimeChannel.unsubscribe();
+                }
+            }
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new CoffeeOrderApp();
+        });
+
+        // Cleanup when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (window.app) {
+                window.app.destroy();
+            }
+        });
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(registration => console.log('SW registered:', registration))
+                .catch(error => console.log('SW registration failed:', error));
+        }
+    </script>
 </body>
 </html>
