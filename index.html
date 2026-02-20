@@ -126,6 +126,196 @@
                 transform: translate(-50%, -165%) scale(0.9);
             }
         }
+
+        .order-celebration {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
+            overflow: hidden;
+            opacity: 0;
+            animation: celebrationOverlay 2.05s ease-out forwards;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .order-celebration::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(120% 70% at 50% 8%, rgba(255, 246, 221, 0.38), rgba(255, 246, 221, 0) 72%);
+            opacity: 0;
+            animation: celebrationBackdrop 1.9s ease-out forwards;
+        }
+
+        .celebration-wave {
+            position: absolute;
+            left: -14%;
+            bottom: -126%;
+            width: 128%;
+            height: 236%;
+            border-radius: 46% 44% 0 0 / 10% 10% 0 0;
+            background:
+                radial-gradient(120% 36% at 50% 4%, rgba(255, 238, 207, 0.28), rgba(255, 238, 207, 0) 58%),
+                linear-gradient(180deg, #9c5d34 0%, #6f3f25 42%, #472716 100%);
+            box-shadow:
+                inset 0 16px 28px rgba(255, 227, 178, 0.15),
+                inset 0 -40px 88px rgba(31, 16, 8, 0.42);
+            transform: translate3d(0, 108%, 0);
+            will-change: transform;
+            animation: coffeeRise 1.55s cubic-bezier(.24,.84,.24,1) forwards;
+        }
+
+        .coffee-surface {
+            position: absolute;
+            top: 4%;
+            left: -8%;
+            width: 116%;
+            height: 176px;
+            background:
+                radial-gradient(95% 120% at 50% 100%, rgba(255, 242, 214, 0.34) 0 26%, rgba(255, 242, 214, 0) 64%),
+                repeating-radial-gradient(circle at 8% 110%, rgba(255, 236, 196, 0.27) 0 22px, rgba(255, 236, 196, 0.02) 22px 52px);
+            filter: blur(1px);
+            opacity: 0.95;
+            animation: coffeeSurfaceDrift 1.25s ease-in-out infinite;
+        }
+
+        .coffee-surface::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 247, 228, 0.36) 0%, rgba(255, 247, 228, 0) 55%);
+        }
+
+        .coffee-shine {
+            position: absolute;
+            inset: -18% -42%;
+            background: linear-gradient(120deg, rgba(255, 255, 255, 0) 35%, rgba(255, 249, 232, 0.28) 49%, rgba(255, 255, 255, 0) 63%);
+            transform: translate3d(-45%, 20%, 0) rotate(10deg);
+            opacity: 0;
+            animation: coffeeShineSweep 1.7s ease-out forwards;
+        }
+
+        .celebration-badge {
+            position: absolute;
+            top: calc(env(safe-area-inset-top) + 14%);
+            left: 50%;
+            z-index: 2;
+            background: rgba(255, 252, 244, 0.9);
+            color: #5b331f;
+            border: 2px solid rgba(111, 78, 55, 0.28);
+            border-radius: 999px;
+            box-shadow: 0 14px 34px rgba(48, 26, 15, 0.25);
+            padding: 12px 22px;
+            font-weight: 800;
+            font-size: clamp(1rem, 2.5vw, 1.35rem);
+            line-height: 1.2;
+            transform: translate(-50%, 22px) scale(0.86);
+            opacity: 0;
+            animation: coffeeBadge 1.75s cubic-bezier(.22,.9,.28,1) forwards;
+            white-space: nowrap;
+            max-width: calc(100vw - 32px);
+            text-overflow: ellipsis;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .celebration-particle {
+            position: absolute;
+            left: var(--x, 50%);
+            bottom: calc(env(safe-area-inset-bottom) + 6%);
+            z-index: 1;
+            width: var(--size, 12px);
+            height: var(--size, 12px);
+            border-radius: 999px;
+            background: radial-gradient(circle at 34% 34%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.26) 40%, rgba(255, 222, 170, 0.04) 68%, rgba(255, 222, 170, 0) 76%);
+            border: 1px solid rgba(255, 246, 228, 0.32);
+            transform: translate3d(0, 0, 0) scale(0.46);
+            opacity: 0;
+            animation: coffeeBubble var(--duration, 1.25s) ease-out forwards;
+            animation-delay: var(--delay, 0s);
+            will-change: transform, opacity;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
+        }
+
+        @keyframes celebrationOverlay {
+            0% { opacity: 0; }
+            8% { opacity: 1; }
+            86% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes celebrationBackdrop {
+            0% { opacity: 0; }
+            22% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes coffeeRise {
+            0% {
+                transform: translate3d(0, 108%, 0);
+            }
+            55% {
+                transform: translate3d(0, 17%, 0);
+            }
+            78% {
+                transform: translate3d(0, -6%, 0);
+            }
+            100% {
+                transform: translate3d(0, 0, 0);
+            }
+        }
+
+        @keyframes coffeeSurfaceDrift {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(-7%); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes coffeeShineSweep {
+            0% {
+                opacity: 0;
+                transform: translate3d(-45%, 20%, 0) rotate(10deg);
+            }
+            22% { opacity: 0.52; }
+            100% {
+                opacity: 0;
+                transform: translate3d(40%, -14%, 0) rotate(10deg);
+            }
+        }
+
+        @keyframes coffeeBadge {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, 22px) scale(0.86);
+            }
+            25% {
+                opacity: 1;
+                transform: translate(-50%, -3px) scale(1.03);
+            }
+            70% {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -18px) scale(0.95);
+            }
+        }
+
+        @keyframes coffeeBubble {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0) scale(0.46);
+            }
+            18% {
+                opacity: 0.82;
+            }
+            100% {
+                opacity: 0;
+                transform: translate3d(var(--drift, 0px), var(--rise, -56vh), 0) scale(1);
+            }
+        }
         
         .header {
             text-align: center;
@@ -393,6 +583,22 @@
             .container {
                 padding: 10px;
             }
+
+            .celebration-wave {
+                left: -22%;
+                width: 144%;
+                bottom: -128%;
+            }
+
+            .coffee-surface {
+                height: 132px;
+            }
+
+            .celebration-badge {
+                font-size: 1rem;
+                padding: 10px 16px;
+                top: calc(env(safe-area-inset-top) + 12%);
+            }
             
             .menu-grid {
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -404,6 +610,19 @@
             
             .employee-banner img {
                 max-width: 150px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .order-celebration,
+            .celebration-wave,
+            .coffee-surface,
+            .coffee-shine,
+            .celebration-badge,
+            .celebration-particle,
+            .order-celebration::before {
+                animation-duration: 0.2s !important;
+                animation-iteration-count: 1 !important;
             }
         }
     </style>
@@ -525,6 +744,7 @@
         const MEOW_SOUND_FILE = 'מיאו.wav';
         let catMeowAudio = null;
         let pumaResetTimeout = null;
+        let orderCelebrationTimeout = null;
         
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
@@ -853,8 +1073,10 @@
                 }
                 
                 debugLog('✅ Order submitted successfully', data);
+                const orderedProduct = selectedProduct;
                 cancelOrder();
                 showSuccess('ההזמנה נשלחה בהצלחה!');
+                showOrderCelebration(orderedProduct);
                 
             } catch (error) {
                 debugLog('❌ Error submitting order', error);
@@ -1039,6 +1261,70 @@
             }
             
             return actions.join('');
+        }
+
+        function showOrderCelebration(productName) {
+            const previousCelebration = document.getElementById('orderCelebration');
+            if (previousCelebration) {
+                previousCelebration.remove();
+            }
+
+            if (orderCelebrationTimeout) {
+                clearTimeout(orderCelebrationTimeout);
+                orderCelebrationTimeout = null;
+            }
+
+            const celebration = document.createElement('div');
+            celebration.id = 'orderCelebration';
+            celebration.className = 'order-celebration';
+            celebration.setAttribute('aria-hidden', 'true');
+
+            const flood = document.createElement('div');
+            flood.className = 'celebration-wave';
+
+            const surface = document.createElement('div');
+            surface.className = 'coffee-surface';
+            flood.appendChild(surface);
+
+            const shine = document.createElement('div');
+            shine.className = 'coffee-shine';
+            flood.appendChild(shine);
+
+            celebration.appendChild(flood);
+
+            const badge = document.createElement('div');
+            badge.className = 'celebration-badge';
+            badge.textContent = productName ? `☕ ${productName} בדרך אליך!` : '☕ הקפה בדרך אליך!';
+            celebration.appendChild(badge);
+
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            const particleCount = isMobile ? 10 : 14;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('span');
+                particle.className = 'celebration-particle';
+                const baseX = 7 + (86 / Math.max(1, particleCount - 1)) * i;
+                const xOffset = (i % 2 === 0 ? 1.8 : -1.8);
+                const size = (isMobile ? 7 : 9) + (i % 4) * 2;
+                const drift = (i % 2 === 0 ? -1 : 1) * (8 + (i % 3) * 7);
+                const rise = -(isMobile ? 45 : 56) - (i % 5) * 7;
+                const duration = (isMobile ? 1.02 : 1.2) + (i % 3) * 0.12;
+
+                particle.style.setProperty('--x', `${Math.max(4, Math.min(96, baseX + xOffset))}%`);
+                particle.style.setProperty('--size', `${size}px`);
+                particle.style.setProperty('--drift', `${drift}px`);
+                particle.style.setProperty('--rise', `${rise}vh`);
+                particle.style.setProperty('--duration', `${duration}s`);
+                particle.style.setProperty('--delay', `${0.08 + i * 0.045}s`);
+                celebration.appendChild(particle);
+            }
+
+            document.body.appendChild(celebration);
+
+            orderCelebrationTimeout = setTimeout(() => {
+                celebration.remove();
+                orderCelebrationTimeout = null;
+            }, 2100);
         }
         
         function showError(message) {
