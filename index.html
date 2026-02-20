@@ -35,6 +35,20 @@
             padding: 25px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .employee-banner:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.16);
+        }
+
+        .employee-banner:focus-visible {
+            outline: 3px solid #b06b37;
+            outline-offset: 4px;
         }
         
         .employee-banner h2 {
@@ -49,6 +63,68 @@
             height: auto;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transform-origin: center bottom;
+        }
+
+        .employee-banner img.puma-jump {
+            animation: pumaJump 900ms cubic-bezier(.2, .8, .25, 1.2);
+        }
+
+        @keyframes pumaJump {
+            0% {
+                transform: translateY(0) scale(1) rotate(0deg);
+            }
+            20% {
+                transform: translateY(-24px) scale(1.05) rotate(-2deg);
+            }
+            45% {
+                transform: translateY(-72px) scale(1.22) rotate(2deg);
+            }
+            65% {
+                transform: translateY(-16px) scale(1.08) rotate(-1deg);
+            }
+            82% {
+                transform: translateY(8px) scale(0.98) rotate(1deg);
+            }
+            100% {
+                transform: translateY(0) scale(1) rotate(0deg);
+            }
+        }
+
+        .meow-bubble {
+            position: absolute;
+            top: 62%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.3);
+            font-weight: 800;
+            font-size: 2.2rem;
+            color: #6f4e37;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .employee-banner.meowing .meow-bubble {
+            animation: meowPop 900ms ease;
+        }
+
+        @keyframes meowPop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -35%) scale(0.2);
+            }
+            15% {
+                opacity: 1;
+                transform: translate(-50%, -90%) scale(1.25);
+            }
+            55% {
+                opacity: 1;
+                transform: translate(-50%, -135%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -165%) scale(0.9);
+            }
         }
         
         .header {
@@ -334,9 +410,10 @@
 </head>
 <body>
     <div class="container">
-        <div class="employee-banner">
+        <div class="employee-banner" id="employeeBanner" role="button" tabindex="0" aria-label="לחץ כדי שפומה יקפוץ ויעשה מיאו">
             <h2>עובד החודש 🌟</h2>
-            <img src="employee.jpg" alt="Employee of the Month" onerror="this.style.display='none'">
+            <img id="employeeImage" src="employee.jpg" alt="Employee of the Month" onerror="this.style.display='none'">
+            <div class="meow-bubble" aria-hidden="true">מיאו!</div>
         </div>
 
         <div class="header">
@@ -445,6 +522,8 @@
         let realtimeChannel = null;
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
+        let catAudioContext = null;
+        let pumaResetTimeout = null;
         
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
@@ -455,6 +534,7 @@
         async function initializeApp() {
             try {
                 setupMenuSelection();
+                setupEmployeeOfTheMonth();
                 await testSupabaseConnection();
                 await loadOrders();
                 setupRealtime();
@@ -516,6 +596,137 @@
                     }
                 });
             });
+        }
+
+        function setupEmployeeOfTheMonth() {
+            const employeeBanner = document.getElementById('employeeBanner');
+            const employeeImage = document.getElementById('employeeImage');
+            const originalEmployeeSrc = employeeImage ? employeeImage.getAttribute('src') : 'employee.jpg';
+            const originalEmployeeAlt = employeeImage ? employeeImage.getAttribute('alt') : 'Employee of the Month';
+
+            if (!employeeBanner || !employeeImage) {
+                return;
+            }
+
+            const triggerPumaJump = () => {
+                if (pumaResetTimeout) {
+                    clearTimeout(pumaResetTimeout);
+                    pumaResetTimeout = null;
+                }
+
+                employeeImage.src = 'puma.jpeg';
+                employeeImage.alt = 'פומה עובד החודש';
+
+                employeeImage.classList.remove('puma-jump');
+                employeeBanner.classList.remove('meowing');
+
+                // Force reflow so animation restarts on every click.
+                void employeeImage.offsetWidth;
+
+                employeeImage.classList.add('puma-jump');
+                employeeBanner.classList.add('meowing');
+                playCatMeow();
+
+                employeeImage.addEventListener('animationend', () => {
+                    employeeImage.classList.remove('puma-jump');
+                    employeeImage.src = originalEmployeeSrc;
+                    employeeImage.alt = originalEmployeeAlt;
+                    if (pumaResetTimeout) {
+                        clearTimeout(pumaResetTimeout);
+                        pumaResetTimeout = null;
+                    }
+                }, { once: true });
+
+                employeeBanner.addEventListener('animationend', () => {
+                    employeeBanner.classList.remove('meowing');
+                }, { once: true });
+
+                // Fallback in case animationend does not fire.
+                pumaResetTimeout = setTimeout(() => {
+                    employeeImage.classList.remove('puma-jump');
+                    employeeBanner.classList.remove('meowing');
+                    employeeImage.src = originalEmployeeSrc;
+                    employeeImage.alt = originalEmployeeAlt;
+                    pumaResetTimeout = null;
+                }, 1100);
+            };
+
+            employeeBanner.addEventListener('click', triggerPumaJump);
+            employeeBanner.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    triggerPumaJump();
+                }
+            });
+        }
+
+        function playCatMeow() {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) {
+                speakMeowFallback();
+                return;
+            }
+
+            try {
+                if (!catAudioContext) {
+                    catAudioContext = new AudioContextClass();
+                }
+
+                if (catAudioContext.state === 'suspended') {
+                    catAudioContext.resume();
+                }
+
+                const now = catAudioContext.currentTime;
+                const carrier = catAudioContext.createOscillator();
+                const modulator = catAudioContext.createOscillator();
+                const modulationGain = catAudioContext.createGain();
+                const gainNode = catAudioContext.createGain();
+                const filter = catAudioContext.createBiquadFilter();
+
+                carrier.type = 'sawtooth';
+                carrier.frequency.setValueAtTime(780, now);
+                carrier.frequency.exponentialRampToValueAtTime(230, now + 0.36);
+
+                modulator.type = 'triangle';
+                modulator.frequency.setValueAtTime(12, now);
+
+                modulationGain.gain.setValueAtTime(40, now);
+
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(950, now);
+                filter.Q.setValueAtTime(2.5, now);
+
+                gainNode.gain.setValueAtTime(0.0001, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.2, now + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+
+                modulator.connect(modulationGain);
+                modulationGain.connect(carrier.frequency);
+                carrier.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(catAudioContext.destination);
+
+                carrier.start(now);
+                modulator.start(now);
+                carrier.stop(now + 0.42);
+                modulator.stop(now + 0.42);
+            } catch (error) {
+                debugLog('⚠️ Could not synthesize meow sound', error);
+                speakMeowFallback();
+            }
+        }
+
+        function speakMeowFallback() {
+            if (!('speechSynthesis' in window)) {
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance('מיאו');
+            utterance.lang = 'he-IL';
+            utterance.pitch = 1.8;
+            utterance.rate = 0.95;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
         }
         
         async function loadOrders() {
