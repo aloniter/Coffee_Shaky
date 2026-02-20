@@ -522,7 +522,8 @@
         let realtimeChannel = null;
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
-        let catAudioContext = null;
+        const MEOW_SOUND_FILE = 'מיאו.wav';
+        let catMeowAudio = null;
         let pumaResetTimeout = null;
         
         // Initialize the app
@@ -661,57 +662,24 @@
         }
 
         function playCatMeow() {
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContextClass) {
-                speakMeowFallback();
-                return;
-            }
-
             try {
-                if (!catAudioContext) {
-                    catAudioContext = new AudioContextClass();
+                if (!catMeowAudio) {
+                    catMeowAudio = new Audio(MEOW_SOUND_FILE);
+                    catMeowAudio.preload = 'auto';
                 }
 
-                if (catAudioContext.state === 'suspended') {
-                    catAudioContext.resume();
+                catMeowAudio.pause();
+                catMeowAudio.currentTime = 0;
+                const playPromise = catMeowAudio.play();
+
+                if (playPromise && typeof playPromise.catch === 'function') {
+                    playPromise.catch((error) => {
+                        debugLog('⚠️ Could not play meow.wav', error);
+                        speakMeowFallback();
+                    });
                 }
-
-                const now = catAudioContext.currentTime;
-                const carrier = catAudioContext.createOscillator();
-                const modulator = catAudioContext.createOscillator();
-                const modulationGain = catAudioContext.createGain();
-                const gainNode = catAudioContext.createGain();
-                const filter = catAudioContext.createBiquadFilter();
-
-                carrier.type = 'sawtooth';
-                carrier.frequency.setValueAtTime(780, now);
-                carrier.frequency.exponentialRampToValueAtTime(230, now + 0.36);
-
-                modulator.type = 'triangle';
-                modulator.frequency.setValueAtTime(12, now);
-
-                modulationGain.gain.setValueAtTime(40, now);
-
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(950, now);
-                filter.Q.setValueAtTime(2.5, now);
-
-                gainNode.gain.setValueAtTime(0.0001, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.2, now + 0.05);
-                gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-
-                modulator.connect(modulationGain);
-                modulationGain.connect(carrier.frequency);
-                carrier.connect(filter);
-                filter.connect(gainNode);
-                gainNode.connect(catAudioContext.destination);
-
-                carrier.start(now);
-                modulator.start(now);
-                carrier.stop(now + 0.42);
-                modulator.stop(now + 0.42);
             } catch (error) {
-                debugLog('⚠️ Could not synthesize meow sound', error);
+                debugLog('⚠️ Could not initialize meow.wav', error);
                 speakMeowFallback();
             }
         }
