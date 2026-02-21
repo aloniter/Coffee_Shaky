@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+  <defs>
+    <linearGradient id="cupBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8f8f8"/>
+      <stop offset="100%" stop-color="#e6e6e6"/>
+    </linearGradient>
+    <linearGradient id="coffee" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b77c4a"/>
+      <stop offset="100%" stop-color="#7c4729"/>
+    </linearGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <rect width="140" height="140" fill="none"/>
+
+  <ellipse cx="70" cy="112" rx="40" ry="8" fill="#d9d9d9" opacity="0.55"/>
+
+  <g filter="url(#softShadow)">
+    <path d="M38 48h64v10c0 22-14 38-32 38S38 80 38 58V48z" fill="url(#cupBody)"/>
+    <ellipse cx="70" cy="48" rx="32" ry="11" fill="#fcfcfc"/>
+    <ellipse cx="70" cy="49" rx="28" ry="8.4" fill="url(#coffee)"/>
+    <path d="M102 56c10 0 16 6 16 14s-6 14-16 14h-4v-8h4c5 0 8-3 8-6s-3-6-8-6h-4v-8h4z" fill="#e9e9e9"/>
+  </g>
+
+  <g>
+    <path d="M70 45c-7 0-12 5-12 10 0 4 3 8 7 10 2 1 4 1 5 4 1-3 3-3 5-4 4-2 7-6 7-10 0-5-5-10-12-10z" fill="#f6efe5"/>
+    <path d="M70 48c-4 0-7 3-7 6 0 2 2 4 4 5 1 1 2 1 3 3 1-2 2-2 3-3 2-1 4-3 4-5 0-3-3-6-7-6z" fill="#fff8ef"/>
+  </g>
+</svg>

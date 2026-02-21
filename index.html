@@ -54,8 +54,30 @@
         .employee-banner h2 {
             color: #6f4e37;
             font-size: 1.8em;
-            margin-bottom: 15px;
+            margin-bottom: 0;
             font-weight: bold;
+        }
+
+        .employee-banner-title-row {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .employee-warning-chip {
+            background: linear-gradient(135deg, #fff0f0 0%, #ffe1e1 100%);
+            color: #8a2d2d;
+            border: 1px solid #f1b7b7;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            line-height: 1.2;
+            box-shadow: 0 2px 8px rgba(138, 45, 45, 0.14);
+            max-width: min(100%, 360px);
         }
         
         .employee-banner img {
@@ -599,6 +621,16 @@
                 padding: 10px 16px;
                 top: calc(env(safe-area-inset-top) + 12%);
             }
+
+            .employee-banner-title-row {
+                gap: 8px;
+            }
+
+            .employee-warning-chip {
+                font-size: 0.8rem;
+                padding: 5px 10px;
+                max-width: 100%;
+            }
             
             .menu-grid {
                 grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -630,7 +662,10 @@
 <body>
     <div class="container">
         <div class="employee-banner" id="employeeBanner" role="button" tabindex="0" aria-label="לחץ כדי שפומה יקפוץ ויעשה מיאו">
-            <h2>עובד החודש 🌟</h2>
+            <div class="employee-banner-title-row">
+                <h2>עובד החודש 🌟</h2>
+                <span class="employee-warning-chip">נא לא ללחוץ על עובד החודש</span>
+            </div>
             <img id="employeeImage" src="employee.jpg" alt="Employee of the Month" onerror="this.style.display='none'">
             <div class="meow-bubble" aria-hidden="true">מיאו!</div>
         </div>
@@ -660,6 +695,10 @@
                 <div class="menu-item" data-product="אמריקנו">
                     <h3>אמריקנו</h3>
                     <img src="./americanoIcon.png" alt="אמריקנו" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2240%22 text-anchor=%22middle%22 dy=%22.3em%22%3E☕%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div class="menu-item" data-product="קפה יובל">
+                    <h3>קפה יובל</h3>
+                    <img src="./flatWhiteIcon.svg" alt="Flat White" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2270%22 height=%2270%22%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2240%22 text-anchor=%22middle%22 dy=%22.3em%22%3E☕%3C/text%3E%3C/svg%3E'">
                 </div>
                 <div class="menu-item" data-product="תה">
                     <h3>תה</h3>
