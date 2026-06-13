@@ -748,6 +748,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
     <script>
         // Debug logging function
         function debugLog(message, data = null) {
@@ -760,14 +761,18 @@
             }
         }
 
-        // Your actual Supabase configuration
-        const SUPABASE_URL = 'https://txnorybrbgmwzoibrode.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bm9yeWJyYmdtd3pvaWJyb2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxMTM4NjAsImV4cCI6MjA2NDY4OTg2MH0.fwg-W9YCwo5ykxmUlUn1pZIMyQ26DEmUPl_RZFeRQEk';
+        const supabaseConfig = window.COFFEE_SHAKY_CONFIG || {};
+        const SUPABASE_URL = supabaseConfig.url;
+        const SUPABASE_KEY = supabaseConfig.publishableKey;
         
         // Initialize Supabase client
         var supabase;
         try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_KEY.includes('PASTE_')) {
+                throw new Error('Missing Supabase URL or publishable key in supabase-config.js');
+            }
+
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             debugLog('✅ Supabase initialized successfully');
         } catch (error) {
             debugLog('❌ Failed to initialize Supabase', error);
