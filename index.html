@@ -4,54 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Coffee Shaky ☕</title>
-    <meta name="description" content="בית הקפה המשפחתי של משפחת איתר. מזמינים בשתי נגיעות, מחכים פחות.">
-    <meta name="theme-color" content="#17110d">
+    <meta name="description" content="בית הקפה המשפחתי שלנו. בוחרים משקה, כותבים שם, והקפה בדרך.">
+    <meta name="theme-color" content="#f6ecd9">
 
     <link rel="icon" type="image/png" href="appicon.png">
     <link rel="apple-touch-icon" href="appicon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;800&family=Suez+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Suez+One&display=swap" rel="stylesheet">
 
     <style>
         /* ---------------------------------------------------------------
-           Coffee Shaky - design tokens
+           Coffee Shaky - a small family cafe
 
-           Palette rationale: the drink illustrations are dark-brown line
-           art, so they need a light surface to read against. Rather than
-           the default coffee-brown-on-cream page (which makes the whole
-           app disappear into generic warm-beige), the page shell is a
-           dark roast built from coffee-bg.jpeg and the cream is demoted
-           to card surfaces only. One interactive accent: pistachio.
-           Brick red is reserved exclusively for destructive actions.
+           Surfaces: warm cream page, near-white cards, light wood for
+           recessed blocks. Espresso brown carries all the type and does the
+           contrast work, rather than covering the interface.
 
-           Radius rule: containers 22px, inner blocks 14px, anything
-           interactive is a full pill. No exceptions.
+           Two accents with fixed jobs, never swapped:
+             green   = go / actionable  (selected drink, send, ready orders)
+             caramel = warm highlight    (house drink, the usual, details)
+
+           Radius rule: containers 20px, recessed blocks 12px, anything
+           interactive is a full pill.
         --------------------------------------------------------------- */
         :root {
-            --roast-950: #17110d;
-            --roast-900: #221913;
-            --roast-800: #32241b;
+            --page: #f6ecd9;
+            --page-warm: #f1e2c9;
+            --card: #fffdf8;
+            --card-sunk: #f4e8d4;
+            --wood: #e6cda8;
+            --wood-deep: #d4b489;
+            --hair: #e5d3b4;
 
-            --cream: #f7f0e1;
-            --cream-sunk: #ece0c9;
-            --cream-line: #dccbaf;
+            --ink: #3a2317;
+            --ink-mid: #715440;
+            /* Measured, not guessed: #a08670 gave 2.7:1 on cream and #856450
+               still only 4.1:1. This clears AA for 10px captions. */
+            --ink-soft: #77563f;
 
-            --ink: #2c1d13;
-            --ink-soft: #7a6350;
+            /* Olive-shifted off a limey #86b45c so the green sits inside the
+               warm palette instead of glowing out of it. */
+            --green: #8aad60;
+            --green-deep: #62853d;
+            /* --green-deep is a border/ledge colour and only reaches 3.8:1 as
+               text on cream, so small green type uses this darker one. */
+            --green-text: #4d6a2c;
+            --green-ink: #1e2a10;
+            --green-wash: #eef3e3;
 
-            --accent: #a8d16c;
-            --accent-deep: #6f9c38;
-            --accent-ink: #1e2b0e;
+            --caramel: #d98b41;
+            /* Darkened from #b96c28 to clear AA on --caramel-wash. */
+            --caramel-deep: #8d4d10;
+            --caramel-wash: #fbeedc;
+            --caramel-soft: #eab97e;
 
-            --brick: #c4553c;
+            --brick: #c0553c;
 
-            --r-card: 18px;
+            --r-card: 20px;
             --r-block: 12px;
 
-            --shadow-card: 0 1px 1px rgba(12, 7, 4, .14), 0 8px 20px -8px rgba(12, 7, 4, .42);
-            --shadow-lift: 0 2px 3px rgba(12, 7, 4, .14), 0 18px 36px -12px rgba(12, 7, 4, .5);
+            /* Shadows tinted with the page hue. No black on cream. */
+            --sh-rest: 0 1px 2px rgba(120, 82, 45, .1), 0 6px 14px -6px rgba(120, 82, 45, .22);
+            --sh-lift: 0 2px 4px rgba(120, 82, 45, .12), 0 16px 30px -10px rgba(120, 82, 45, .3);
 
             --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
             --ease-out: cubic-bezier(.16, 1, .3, 1);
@@ -62,24 +78,25 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* Author display rules on .usual / .sheet would otherwise beat the UA
-           stylesheet's [hidden] { display: none }. */
+        /* Author display rules would otherwise beat the UA [hidden] rule. */
         [hidden] { display: none !important; }
 
         html { -webkit-text-size-adjust: 100%; }
 
         body {
             font-family: var(--font-ui);
-            background: var(--roast-950);
-            color: var(--cream);
+            background: var(--page);
+            color: var(--ink);
             min-height: 100dvh;
             direction: rtl;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
         }
 
-        /* Real bean texture instead of a flat fill. Fixed + pointer-events
-           none so it never repaints during scroll. */
+        /* coffee-bg.jpeg blurred almost to nothing: enough to give the cream a
+           paper grain, not enough to read as a photo of beans. Multiply on a
+           light page darkens hard, so this sits far lower than it would on a
+           dark one. */
         body::before {
             content: '';
             position: fixed;
@@ -87,99 +104,94 @@
             z-index: 0;
             pointer-events: none;
             background-image: url('coffee-bg.jpeg');
-            background-size: 300px;
-            background-repeat: repeat;
-            opacity: .06;
-            filter: saturate(.3) contrast(.85) blur(2px);
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background: radial-gradient(115% 62% at 50% -8%, rgba(168, 209, 108, .10), rgba(23, 17, 13, 0) 62%);
+            background-size: 190px;
+            mix-blend-mode: multiply;
+            opacity: .05;
+            filter: saturate(.16) brightness(1.9) blur(5px);
         }
 
         .shell {
             position: relative;
             z-index: 1;
-            max-width: 760px;
+            max-width: 720px;
             margin: 0 auto;
-            padding: 0 16px calc(28px + env(safe-area-inset-bottom));
+            padding: 0 15px calc(30px + env(safe-area-inset-bottom));
         }
 
-        /* ---------------- the counter (header) ---------------- */
+        /* ---------------- awning ---------------- */
+
+        /* A striped awning hem across the very top. Reads as "cafe" in one
+           glance. Kept short and low contrast on purpose: at full caramel and
+           15px it read as a circus tent rather than a shopfront. */
+        .awning {
+            position: relative;
+            height: 8px;
+            margin: 0 -15px;
+            background: repeating-linear-gradient(90deg,
+                var(--caramel-soft) 0 15px, #fdf7ea 15px 30px);
+        }
+
+        .awning::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            height: 6px;
+            background:
+                radial-gradient(circle 7.5px at 7.5px 0, var(--caramel-soft) 7.4px, rgba(0, 0, 0, 0) 7.8px) 0 0 / 30px 6px repeat-x,
+                radial-gradient(circle 7.5px at 22.5px 0, #fdf7ea 7.4px, rgba(0, 0, 0, 0) 7.8px) 0 0 / 30px 6px repeat-x;
+            filter: drop-shadow(0 2px 3px rgba(120, 82, 45, .16));
+        }
+
+        /* ---------------- header ---------------- */
 
         .counter {
-            position: relative;
-            margin: 0 -16px 22px;
-            /* Extra headroom so the jumping cat stays inside the header. */
-            padding: calc(env(safe-area-inset-top) + 36px) 22px 26px;
-            overflow: hidden;
-        }
-
-        .counter::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image: url('coffee-bg.jpeg');
-            background-size: 340px;
-            background-position: 50% 32%;
-            opacity: .42;
-            filter: saturate(.6) contrast(.92);
-            /* Fades the beans out at the bottom so the header does not end in
-               a hard horizontal seam against the page. */
-            -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 100%);
-            mask-image: linear-gradient(180deg, #000 52%, transparent 100%);
-        }
-
-        /* The scrim carries most of the header's depth so the beans stay a
-           texture and never compete with the drink cards. */
-        .counter::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(90% 120% at 82% 8%, rgba(23, 17, 13, .3), rgba(23, 17, 13, .82) 70%),
-                linear-gradient(180deg, rgba(23, 17, 13, .72) 0%, rgba(23, 17, 13, .9) 58%, var(--roast-950) 100%);
-        }
-
-        .counter-inner {
-            position: relative;
-            z-index: 1;
             display: flex;
-            align-items: center;
-            gap: 16px;
+            align-items: flex-start;
+            gap: 14px;
+            /* Top padding is headroom for the jumping polaroid, which is a lot
+               taller than a round avatar and otherwise clips off-screen. */
+            padding: 38px 4px 22px;
         }
 
-        .wordmark { flex: 1; min-width: 0; }
+        .wordmark { flex: 1; min-width: 0; padding-top: 4px; }
 
         .wordmark h1 {
             font-family: var(--font-sign);
-            font-size: clamp(1.95rem, 8.2vw, 2.5rem);
+            font-size: clamp(2rem, 8.6vw, 2.6rem);
             line-height: 1;
             letter-spacing: -.02em;
-            color: var(--cream);
-            text-shadow: 0 2px 0 rgba(12, 7, 4, .45), 0 14px 30px rgba(12, 7, 4, .5);
+            color: var(--ink);
+        }
+
+        /* Brush underline that fades out, like a sign painted by hand. Thin,
+           so it underlines the wordmark instead of competing with it. */
+        .wordmark h1::after {
+            content: '';
+            display: block;
+            width: 2.4em;
+            height: 4px;
+            margin-top: 7px;
+            border-radius: 999px;
+            background: linear-gradient(-90deg, var(--caramel), rgba(217, 139, 65, 0));
         }
 
         .tagline {
-            margin-top: 8px;
-            font-size: .82rem;
+            margin-top: 9px;
+            font-size: .84rem;
             font-weight: 500;
-            line-height: 1.35;
-            color: rgba(247, 240, 225, .58);
+            line-height: 1.4;
+            color: var(--ink-mid);
             text-wrap: balance;
         }
 
-        /* ---------------- employee of the month easter egg ---------------- */
+        /* ---------------- employee of the month ---------------- */
 
+        /* A crooked polaroid taped to the wall, not an avatar chip. */
         .staff {
-            position: relative;
             flex: 0 0 auto;
-            width: 88px;
+            width: 96px;
             padding: 0;
             border: 0;
             background: none;
@@ -188,133 +200,151 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 7px;
-            transition: transform .22s var(--ease-spring);
+            position: relative;
+            transition: transform .28s var(--ease-spring);
         }
 
-        .staff:active { transform: scale(.94); }
-
-        /* The frame is what jumps, so the badge ring travels with the photo
-           instead of being left behind as a bare green disc. */
         .staff-frame {
             position: relative;
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            padding: 3px;
-            background: linear-gradient(150deg, var(--accent) 0%, var(--accent-deep) 100%);
-            box-shadow: var(--shadow-card);
-            transform-origin: 50% 85%;
+            width: 84px;
+            padding: 6px 6px 22px;
+            background: var(--card);
+            border-radius: 4px;
+            box-shadow: var(--sh-rest);
+            transform: rotate(-3.5deg);
+            transform-origin: 50% 90%;
+            transition: transform .28s var(--ease-spring), box-shadow .28s var(--ease-out);
+        }
+
+        /* A strip of tape holding the photo up. */
+        .staff-frame::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            width: 34px;
+            height: 15px;
+            transform: translateX(-50%) rotate(2deg);
+            background: rgba(230, 205, 168, .8);
+            border: 1px solid rgba(180, 145, 105, .28);
+            border-radius: 2px;
         }
 
         .staff img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            object-position: 50% 22%;
-            background: var(--roast-800);
             display: block;
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            object-position: 50% 20%;
+            border-radius: 2px;
+            background: var(--card-sunk);
         }
 
-        .staff-frame.puma-jump { animation: pumaJump 900ms cubic-bezier(.2, .8, .25, 1.2); }
+        @media (hover: hover) {
+            .staff:hover .staff-frame {
+                transform: rotate(0deg) scale(1.04);
+                box-shadow: var(--sh-lift);
+            }
+        }
 
+        .staff:active .staff-frame { transform: rotate(0deg) scale(.96); }
+
+        .staff-frame.puma-jump { animation: pumaJump 950ms cubic-bezier(.2, .8, .25, 1.2); }
+
+        /* Startled, not launched: the polaroid is ~112px tall, so a big hop
+           plus a 1.3 scale threw it clean off the top of the screen. The comedy
+           is in the swing, which costs no vertical room. */
         @keyframes pumaJump {
-            0%   { transform: translateY(0) scale(1) rotate(0deg); }
-            20%  { transform: translateY(-9px) scale(1.06) rotate(-5deg); }
-            45%  { transform: translateY(-26px) scale(1.28) rotate(6deg); }
-            65%  { transform: translateY(-7px) scale(1.09) rotate(-4deg); }
-            82%  { transform: translateY(5px) scale(.96) rotate(3deg); }
-            100% { transform: translateY(0) scale(1) rotate(0deg); }
+            0%   { transform: rotate(-3.5deg) translateY(0) scale(1); }
+            16%  { transform: rotate(7deg) translateY(-7px) scale(1.06); }
+            40%  { transform: rotate(-13deg) translateY(-14px) scale(1.12); }
+            60%  { transform: rotate(10deg) translateY(-4px) scale(1.07); }
+            78%  { transform: rotate(-7deg) translateY(4px) scale(.97); }
+            90%  { transform: rotate(2deg) translateY(1px) scale(1.01); }
+            100% { transform: rotate(-3.5deg) translateY(0) scale(1); }
         }
 
-        /* A crown that only shows up while Puma is mid air. Sits outside
-           .staff-frame so its lift does not compound with the jump. */
         .staff-crown {
             position: absolute;
-            top: 0;
+            top: -4px;
             left: 50%;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             opacity: 0;
             transform: translate(-50%, 8px) scale(.5);
             pointer-events: none;
         }
 
-        .staff.meowing .staff-crown { animation: crownPop 900ms var(--ease-spring); }
+        .staff.meowing .staff-crown { animation: crownPop 950ms var(--ease-spring); }
 
         @keyframes crownPop {
             0%   { opacity: 0; transform: translate(-50%, 8px) scale(.5) rotate(0deg); }
-            35%  { opacity: 1; transform: translate(-50%, -22px) scale(1.15) rotate(-12deg); }
-            70%  { opacity: 1; transform: translate(-50%, -26px) scale(1) rotate(10deg); }
-            100% { opacity: 0; transform: translate(-50%, -34px) scale(.9) rotate(0deg); }
+            34%  { opacity: 1; transform: translate(-50%, -21px) scale(1.18) rotate(-13deg); }
+            70%  { opacity: 1; transform: translate(-50%, -25px) scale(1) rotate(11deg); }
+            100% { opacity: 0; transform: translate(-50%, -33px) scale(.9) rotate(0deg); }
         }
 
+        /* The nudge to press it. Small and dry, so it reads as an aside. */
         .staff-tag {
+            margin-top: 9px;
             font-size: .6rem;
             font-weight: 600;
-            line-height: 1.15;
+            line-height: 1.3;
             text-align: center;
-            color: rgba(251, 246, 234, .55);
-            letter-spacing: .02em;
+            text-wrap: balance;
+            color: var(--ink-soft);
+            transform: rotate(-1.5deg);
         }
 
-        /* Deadpan on purpose. A loud warning label would flatten the joke and
-           add a third green element to the header. */
-        .staff-tag b {
-            display: block;
-            color: rgba(247, 240, 225, .8);
-            font-weight: 700;
-            font-size: .66rem;
-        }
-
-        /* Opens inward (left: 100%) so it never runs off the screen edge: the
-           avatar sits in the far corner of the header. */
+        /* Opens inward: the polaroid sits in the far corner of the header. */
+        /* Sits beside the photo, below the wordmark's cap height, so the meow
+           never covers the brand. */
         .meow-bubble {
             position: absolute;
-            top: 2px;
+            top: 44px;
             left: 100%;
-            margin-left: 8px;
-            padding: 7px 13px;
+            z-index: 3;
+            margin-left: 4px;
+            padding: 7px 14px;
             border-radius: 999px;
-            background: var(--cream);
-            color: var(--ink);
+            background: var(--ink);
+            color: var(--card);
             font-family: var(--font-sign);
             font-size: 1rem;
             white-space: nowrap;
-            box-shadow: var(--shadow-card);
+            box-shadow: var(--sh-lift);
             pointer-events: none;
             opacity: 0;
             transform: scale(.4);
-            transform-origin: 0 50%;
-            z-index: 2;
+            transform-origin: 0 60%;
         }
 
-        .staff.meowing .meow-bubble { animation: meowPop 950ms var(--ease-spring); }
+        .staff.meowing .meow-bubble { animation: meowPop 1000ms var(--ease-spring); }
 
         @keyframes meowPop {
             0%   { opacity: 0; transform: scale(.4) rotate(0deg); }
             18%  { opacity: 1; transform: scale(1.12) rotate(-5deg); }
-            55%  { opacity: 1; transform: scale(1) rotate(2deg); }
-            100% { opacity: 0; transform: scale(.94) rotate(0deg) translateY(-10px); }
+            58%  { opacity: 1; transform: scale(1) rotate(2deg); }
+            100% { opacity: 0; transform: scale(.95) rotate(0deg) translateY(-10px); }
         }
 
-        /* ---------------- open sign / connection ---------------- */
+        /* ---------------- open sign ---------------- */
 
+        /* Lives inside the wordmark column so the header has no dead gap under
+           the polaroid caption. */
         .open-sign {
-            position: relative;
-            z-index: 1;
-            margin-top: 16px;
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            padding: 5px 12px 5px 10px;
+            margin: 13px 0 0;
+            padding: 6px 13px 6px 11px;
             border-radius: 999px;
-            font-size: .7rem;
+            font-size: .72rem;
             font-weight: 600;
-            background: rgba(251, 246, 234, .08);
-            border: 1px solid rgba(251, 246, 234, .14);
-            color: rgba(251, 246, 234, .78);
-            transition: color .25s, background .25s, border-color .25s;
+            background: var(--card);
+            border: 1px solid var(--hair);
+            color: var(--ink-mid);
+            box-shadow: var(--sh-rest);
+            transition: color .25s, border-color .25s;
         }
 
         .open-sign .bulb {
@@ -322,74 +352,69 @@
             height: 7px;
             border-radius: 50%;
             background: currentColor;
-            box-shadow: 0 0 0 0 currentColor;
         }
 
-        .open-sign.is-open {
-            color: var(--accent);
-            background: rgba(168, 209, 108, .12);
-            border-color: rgba(168, 209, 108, .3);
-        }
-
-        .open-sign.is-open .bulb { animation: bulbPulse 2.4s ease-out infinite; }
+        .open-sign.is-open { color: var(--green-text); border-color: rgba(138, 173, 96, .55); }
+        .open-sign.is-open .bulb { animation: bulbPulse 2.6s ease-out infinite; }
 
         @keyframes bulbPulse {
-            0%   { box-shadow: 0 0 0 0 rgba(168, 209, 108, .6); }
-            70%  { box-shadow: 0 0 0 9px rgba(168, 209, 108, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(168, 209, 108, 0); }
+            0%   { box-shadow: 0 0 0 0 rgba(98, 133, 61, .55); }
+            70%  { box-shadow: 0 0 0 8px rgba(98, 133, 61, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(98, 133, 61, 0); }
         }
 
-        .open-sign.is-shut { color: #e8a08c; background: rgba(196, 85, 60, .14); border-color: rgba(196, 85, 60, .32); }
+        .open-sign.is-shut { color: var(--brick); border-color: rgba(192, 85, 60, .45); }
 
-        /* ---------------- section headings ---------------- */
+        /* ---------------- sections ---------------- */
 
         .section-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            margin-bottom: 14px;
+            margin: 0 4px 13px;
         }
 
         .section-head h2 {
             font-family: var(--font-sign);
-            font-size: 1.5rem;
+            font-size: 1.45rem;
             font-weight: 400;
-            line-height: 1.1;
-            color: var(--cream);
+            line-height: 1.15;
+            color: var(--ink);
         }
 
         .section-head .count {
-            color: rgba(251, 246, 234, .42);
             font-family: var(--font-ui);
             font-size: .95rem;
-            font-weight: 600;
+            font-weight: 700;
             font-variant-numeric: tabular-nums;
+            color: var(--ink-soft);
         }
 
-        section + section { margin-top: 30px; }
+        section + section { margin-top: 28px; }
 
-        /* ---------------- the usual (one tap reorder) ---------------- */
+        /* ---------------- the usual ---------------- */
 
         .usual {
             display: inline-flex;
             align-items: center;
-            gap: 9px;
+            gap: 8px;
             max-width: 100%;
-            padding: 8px 8px 8px 15px;
-            border: 1px dashed rgba(168, 209, 108, .5);
+            min-height: 44px;
+            padding: 6px 8px 6px 15px;
+            border: 1.5px solid var(--caramel);
             border-radius: 999px;
-            background: rgba(168, 209, 108, .1);
-            color: var(--accent);
+            background: var(--caramel-wash);
+            color: var(--caramel-deep);
             font-family: inherit;
-            font-size: .82rem;
-            font-weight: 600;
+            font-size: .8rem;
+            font-weight: 700;
             cursor: pointer;
             transition: transform .2s var(--ease-spring), background .2s;
         }
 
         .usual:active { transform: scale(.95); }
-        .usual:hover { background: rgba(168, 209, 108, .18); }
+        .usual:hover { background: #f7e2c6; }
         .usual img { width: 26px; height: 26px; object-fit: contain; }
         .usual span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -398,43 +423,44 @@
         .menu-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 11px;
         }
 
         .drink {
             position: relative;
             display: flex;
             align-items: center;
-            gap: 12px;
-            min-height: 84px;
-            padding: 14px 16px;
-            border: 1.5px solid var(--cream-line);
+            gap: 11px;
+            min-height: 82px;
+            padding: 13px 15px;
+            border: 1.5px solid var(--hair);
             border-radius: var(--r-card);
-            background: var(--cream);
+            background: var(--card);
             color: var(--ink);
             font-family: inherit;
             text-align: right;
             cursor: pointer;
-            box-shadow: var(--shadow-card);
-            transition: transform .2s var(--ease-spring), box-shadow .2s var(--ease-out),
+            box-shadow: var(--sh-rest);
+            overflow: hidden;
+            transition: transform .18s var(--ease-spring), box-shadow .2s var(--ease-out),
                         border-color .2s, background .2s;
         }
 
-        .drink:active { transform: scale(.96); }
+        .drink > h3,
+        .drink > span { flex: 1; min-width: 0; }
+
+        .drink:active { transform: scale(.955); }
 
         @media (hover: hover) {
             .drink:hover {
                 transform: translateY(-3px);
-                box-shadow: var(--shadow-lift);
-                border-color: var(--accent-deep);
+                box-shadow: var(--sh-lift);
+                border-color: var(--wood-deep);
             }
-            .drink:hover img { transform: scale(1.09) rotate(-3deg); }
+            .drink:hover img { transform: scale(1.1) rotate(-4deg); }
         }
 
-        .drink:focus-visible {
-            outline: 3px solid var(--accent);
-            outline-offset: 3px;
-        }
+        .drink:focus-visible { outline: 3px solid var(--green-deep); outline-offset: 3px; }
 
         .drink img {
             width: 46px;
@@ -451,33 +477,41 @@
             letter-spacing: -.01em;
         }
 
-        .drink > h3,
-        .drink > span { flex: 1; min-width: 0; }
-
-        /* The house drink gets the whole first row. 7 drinks, 7 cells,
-           no orphan tile. */
-        /* row-reverse anchors the big cup in the far corner and puts the name
-           at the reading edge, so the extra width reads as a counter sign
-           instead of an empty slab. */
+        /* House drink takes the whole first row: 7 drinks fill 7 cells with no
+           orphan tile. row-reverse anchors the cup in the far corner so the
+           extra width reads as a sign, not a void. */
         .drink--hero {
             grid-column: 1 / -1;
             flex-direction: row-reverse;
             justify-content: space-between;
-            min-height: 108px;
-            padding: 16px 22px;
-            gap: 16px;
-            background: linear-gradient(150deg, var(--cream) 0%, var(--cream-sunk) 100%);
+            min-height: 104px;
+            padding: 15px 20px;
+            background: linear-gradient(145deg, var(--card) 0%, var(--card-sunk) 100%);
         }
 
         .drink--hero > span { flex: 0 1 auto; }
-
-        .drink--hero img { width: 72px; height: 72px; }
+        .drink--hero img { width: 70px; height: 70px; }
 
         .drink--hero h3 {
             font-family: var(--font-sign);
-            font-size: 1.55rem;
+            font-size: 1.5rem;
             font-weight: 400;
             letter-spacing: -.02em;
+        }
+
+        /* A coffee ring somebody left on the counter. Warm brown and mostly
+           cropped by the card edge, so it reads as a stain rather than a
+           stray grey circle floating in the middle. */
+        .drink--hero::before {
+            content: '';
+            position: absolute;
+            bottom: -52px;
+            left: 14%;
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            border: 5px solid rgba(160, 96, 40, .07);
+            pointer-events: none;
         }
 
         .drink-flag {
@@ -485,39 +519,39 @@
             margin-top: 5px;
             padding: 3px 10px;
             border-radius: 999px;
-            background: var(--accent);
-            color: var(--accent-ink);
-            font-size: .68rem;
+            background: var(--caramel);
+            color: var(--ink);
+            font-size: .67rem;
             font-weight: 700;
-            letter-spacing: .01em;
         }
 
         .drink.is-picked {
-            background: var(--accent);
-            border-color: var(--accent-deep);
-            color: var(--accent-ink);
-            box-shadow: 0 2px 2px rgba(12, 7, 4, .18), 0 14px 30px -8px rgba(111, 156, 56, .55);
+            background: var(--green);
+            border-color: var(--green-deep);
+            color: var(--green-ink);
+            box-shadow: 0 1px 2px rgba(98, 133, 61, .2), 0 12px 24px -8px rgba(98, 133, 61, .55);
         }
 
-        /* Selected state keeps the illustration in full colour and marks the
-           card instead of bleaching the artwork to a white silhouette. */
-        .drink.is-picked .drink-flag { background: var(--accent-ink); color: var(--accent); }
+        /* Selected keeps the illustration in full colour and marks the card
+           instead of bleaching the artwork into a silhouette. */
+        .drink.is-picked .drink-flag { background: var(--green-ink); color: var(--green); }
+        .drink.is-picked::before { border-color: rgba(31, 46, 13, .1); }
 
         .drink.is-picked::after {
             content: '✓';
             position: absolute;
-            top: 9px;
-            left: 11px;
+            top: 8px;
+            left: 10px;
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: var(--accent-ink);
-            color: var(--accent);
-            font-size: .8rem;
+            background: var(--green-ink);
+            color: var(--green);
+            font-size: .78rem;
             font-weight: 700;
             display: grid;
             place-items: center;
-            animation: tickIn .28s var(--ease-spring);
+            animation: tickIn .3s var(--ease-spring);
         }
 
         @keyframes tickIn {
@@ -533,10 +567,11 @@
             right: 0;
             bottom: 0;
             left: 0;
-            padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
-            background: var(--cream);
-            border-radius: 26px 26px 0 0;
-            box-shadow: 0 -3px 0 rgba(111, 156, 56, .5), 0 -22px 50px rgba(12, 7, 4, .6);
+            padding: 13px 15px calc(15px + env(safe-area-inset-bottom));
+            background: var(--card);
+            border-top: 1.5px solid var(--hair);
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -14px 40px rgba(120, 82, 45, .28);
             transform: translateY(105%);
             transition: transform .34s var(--ease-out);
         }
@@ -544,18 +579,18 @@
         .sheet.is-up { transform: translateY(0); }
 
         .sheet-body {
-            max-width: 728px;
+            max-width: 690px;
             margin: 0 auto;
             display: grid;
-            gap: 11px;
+            gap: 10px;
         }
 
         .sheet-drink {
             display: flex;
             align-items: center;
-            gap: 11px;
-            padding-bottom: 11px;
-            border-bottom: 1px solid var(--cream-line);
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1.5px dashed var(--hair);
         }
 
         .sheet-drink img { width: 40px; height: 40px; object-fit: contain; }
@@ -563,8 +598,9 @@
         .sheet-drink strong {
             flex: 1;
             min-width: 0;
-            font-size: 1.12rem;
-            font-weight: 600;
+            font-family: var(--font-sign);
+            font-size: 1.2rem;
+            font-weight: 400;
             color: var(--ink);
             overflow: hidden;
             text-overflow: ellipsis;
@@ -573,11 +609,12 @@
 
         .sheet-swap {
             flex: 0 0 auto;
-            padding: 8px 14px;
-            border: 1.5px solid var(--cream-line);
+            min-height: 44px;
+            padding: 0 16px;
+            border: 1.5px solid var(--hair);
             border-radius: 999px;
             background: transparent;
-            color: var(--ink-soft);
+            color: var(--ink-mid);
             font-family: inherit;
             font-size: .8rem;
             font-weight: 600;
@@ -586,47 +623,42 @@
         }
 
         .sheet-swap:active { transform: scale(.94); }
-        .sheet-swap:hover { border-color: var(--ink-soft); color: var(--ink); }
+        .sheet-swap:hover { border-color: var(--ink-mid); color: var(--ink); }
 
         .field { display: grid; gap: 5px; }
 
         .field label {
             font-size: .78rem;
             font-weight: 600;
-            color: var(--ink-soft);
+            color: var(--ink-mid);
         }
 
         .field input {
             width: 100%;
             min-height: 50px;
             padding: 12px 15px;
-            border: 1.5px solid var(--cream-line);
+            border: 1.5px solid var(--hair);
             border-radius: var(--r-block);
-            background: #fff;
+            background: var(--page);
             color: var(--ink);
             font-family: inherit;
             font-size: 1rem;
-            transition: border-color .2s, box-shadow .2s;
+            transition: border-color .2s, box-shadow .2s, background .2s;
         }
 
-        .field input::placeholder { color: #a2907c; }
+        .field input::placeholder { color: var(--ink-soft); }
 
         .field input:focus {
             outline: none;
-            border-color: var(--accent-deep);
-            box-shadow: 0 0 0 3px rgba(168, 209, 108, .34);
+            background: #fff;
+            border-color: var(--green-deep);
+            box-shadow: 0 0 0 3px rgba(138, 173, 96, .34);
         }
 
-        .field.has-error input { border-color: var(--brick); }
-        .field.has-error input:focus { box-shadow: 0 0 0 3px rgba(196, 85, 60, .3); }
+        .field.has-error input { border-color: var(--brick); animation: nudge .34s ease; }
+        .field.has-error input:focus { box-shadow: 0 0 0 3px rgba(192, 85, 60, .28); }
 
-        .field-error {
-            font-size: .76rem;
-            font-weight: 600;
-            color: var(--brick);
-        }
-
-        .field.has-error input { animation: nudge .34s ease; }
+        .field-error { font-size: .76rem; font-weight: 600; color: var(--brick); }
 
         @keyframes nudge {
             0%, 100% { transform: translateX(0); }
@@ -640,79 +672,81 @@
             justify-content: center;
             gap: 9px;
             width: 100%;
-            min-height: 56px;
+            min-height: 58px;
             margin-top: 3px;
             padding: 0 22px;
             border: 0;
             border-radius: 999px;
-            background: var(--accent);
-            color: var(--accent-ink);
+            background: linear-gradient(180deg, #96b96e 0%, var(--green) 100%);
+            color: var(--green-ink);
             font-family: inherit;
-            font-size: 1.08rem;
+            font-size: 1.1rem;
             font-weight: 700;
             letter-spacing: -.01em;
             cursor: pointer;
-            box-shadow: 0 4px 0 var(--accent-deep), 0 12px 24px -6px rgba(111, 156, 56, .6);
-            transition: transform .16s var(--ease-spring), box-shadow .16s var(--ease-out), background .2s;
+            box-shadow: 0 4px 0 var(--green-deep), 0 12px 22px -6px rgba(98, 133, 61, .55);
+            transition: transform .16s var(--ease-spring), box-shadow .16s var(--ease-out);
         }
 
-        /* Physical push: the button drops onto its own 4px ledge. */
+        .send .cup { font-size: 1.15em; }
+
+        /* Physical push: the button drops onto its own ledge. */
         .send:active {
             transform: translateY(4px);
-            box-shadow: 0 0 0 var(--accent-deep), 0 6px 14px -6px rgba(111, 156, 56, .5);
+            box-shadow: 0 0 0 var(--green-deep), 0 5px 12px -6px rgba(98, 133, 61, .5);
         }
 
         .send:disabled {
-            background: var(--cream-sunk);
+            background: var(--card-sunk);
             color: var(--ink-soft);
-            box-shadow: 0 4px 0 var(--cream-line);
+            box-shadow: 0 4px 0 var(--hair);
             cursor: progress;
         }
 
-        .send:focus-visible { outline: 3px solid var(--roast-800); outline-offset: 3px; }
+        .send:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
         /* ---------------- queue ---------------- */
 
-        /* auto-fit so a single group fills the row instead of being stranded
-           in one half of a rigid 2-column grid. */
         .queue-columns {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
             align-items: start;
         }
 
-        .queue-group + .queue-group { margin-top: 20px; }
+        .queue-group + .queue-group { margin-top: 18px; }
 
         .queue-label {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            font-size: .82rem;
+            gap: 7px;
+            margin: 0 4px 9px;
+            font-size: .78rem;
             font-weight: 700;
-            letter-spacing: .04em;
-            color: rgba(251, 246, 234, .58);
+            letter-spacing: .03em;
+            color: var(--ink-mid);
         }
 
         .queue-label .n {
             font-variant-numeric: tabular-nums;
-            color: rgba(251, 246, 234, .38);
+            color: var(--ink-soft);
         }
 
-        .queue-group--ready .queue-label { color: var(--accent); }
+        .queue-group--ready .queue-label { color: var(--green-text); }
 
-        .tickets { display: grid; gap: 11px; }
+        .tickets { display: grid; gap: 10px; }
 
         .ticket {
+            position: relative;
             display: grid;
             grid-template-columns: auto 1fr;
-            gap: 13px;
-            padding: 14px 16px;
+            gap: 12px;
+            padding: 13px 15px;
+            border: 1.5px solid var(--hair);
             border-radius: var(--r-card);
-            background: var(--cream);
+            background: var(--card);
             color: var(--ink);
-            box-shadow: var(--shadow-card);
+            box-shadow: var(--sh-rest);
         }
 
         .ticket.is-new { animation: ticketIn .5s var(--ease-spring); }
@@ -727,15 +761,14 @@
             width: 46px;
             height: 46px;
             border-radius: var(--r-block);
-            background: var(--cream-sunk);
+            background: var(--wood);
             display: grid;
             place-items: center;
         }
 
         .ticket-cup img { width: 34px; height: 34px; object-fit: contain; }
 
-        /* Steam only on drinks still being made. Communicates state, so it
-           earns its infinite loop. */
+        /* Steam only on drinks still being made, so the loop earns itself. */
         .ticket-cup .steam {
             position: absolute;
             top: -7px;
@@ -743,13 +776,11 @@
             width: 4px;
             height: 11px;
             border-radius: 999px;
-            background: linear-gradient(180deg, rgba(122, 99, 80, .55), rgba(122, 99, 80, 0));
+            background: linear-gradient(180deg, rgba(125, 95, 73, .5), rgba(125, 95, 73, 0));
             transform: translateX(-50%);
             animation: steamUp 2.1s ease-in-out infinite;
         }
 
-        /* nth-of-type, not nth-child: the <img> is also a child of .ticket-cup,
-           which previously left two wisps stacked on the same axis. */
         .ticket-cup .steam:nth-of-type(2) { margin-left: -8px; animation-delay: .6s; }
         .ticket-cup .steam:nth-of-type(3) { margin-left: 8px; animation-delay: 1.2s; }
 
@@ -759,16 +790,12 @@
             100% { opacity: 0; transform: translate(-50%, -12px) scaleY(1.3); }
         }
 
-        .ticket-top {
-            display: flex;
-            align-items: baseline;
-            gap: 9px;
-        }
+        .ticket-top { display: flex; align-items: baseline; gap: 9px; }
 
         .ticket-drink {
             flex: 1;
             min-width: 0;
-            font-size: 1.06rem;
+            font-size: 1.04rem;
             font-weight: 600;
             line-height: 1.25;
             letter-spacing: -.01em;
@@ -786,14 +813,14 @@
             margin-top: 2px;
             font-size: .92rem;
             font-weight: 500;
-            color: var(--ink-soft);
+            color: var(--ink-mid);
         }
 
         .ticket-note {
-            margin-top: 8px;
+            margin-top: 7px;
             padding: 7px 11px;
             border-radius: 10px;
-            background: var(--cream-sunk);
+            background: var(--card-sunk);
             font-size: .86rem;
             line-height: 1.4;
             color: var(--ink);
@@ -807,12 +834,12 @@
         }
 
         .act {
-            min-height: 42px;
-            padding: 0 17px;
+            min-height: 44px;
+            padding: 0 18px;
             border: 0;
             border-radius: 999px;
             background: var(--ink);
-            color: var(--cream);
+            color: var(--card);
             font-family: inherit;
             font-size: .88rem;
             font-weight: 600;
@@ -821,37 +848,46 @@
         }
 
         .act:active { transform: scale(.94); }
-        .act:hover { background: #40291a; }
+        .act:hover { background: #4d3020; }
 
-        .act--go { background: var(--accent-deep); color: #fff; }
-        .act--go:hover { background: #5e8630; }
+        .act--go {
+            background: var(--green);
+            color: var(--green-ink);
+            box-shadow: 0 3px 0 var(--green-deep);
+        }
+
+        .act--go:active { transform: translateY(3px); box-shadow: 0 0 0 var(--green-deep); }
+        .act--go:hover { background: #96b96e; }
 
         .act--kill {
-            min-width: 42px;
+            min-width: 44px;
             padding: 0 12px;
             margin-inline-start: auto;
             background: transparent;
-            color: #b0705f;
+            color: var(--ink-soft);
             font-size: 1rem;
         }
 
-        .act--kill:hover { background: rgba(196, 85, 60, .12); color: var(--brick); }
+        .act--kill:hover { background: rgba(192, 85, 60, .12); color: var(--brick); }
 
         /* Ready tickets are filled, not merely recoloured. */
         .ticket--ready {
-            background: linear-gradient(150deg, #bcdd88 0%, var(--accent) 100%);
-            color: var(--accent-ink);
-            box-shadow: 0 2px 2px rgba(12, 7, 4, .18), 0 16px 34px -10px rgba(111, 156, 56, .6);
+            background: linear-gradient(150deg, #a3c47a 0%, var(--green) 100%);
+            border-color: var(--green-deep);
+            color: var(--green-ink);
+            box-shadow: 0 1px 2px rgba(98, 133, 61, .2), 0 14px 28px -10px rgba(98, 133, 61, .5);
         }
 
-        .ticket--ready .ticket-cup { background: rgba(30, 43, 14, .13); }
+        .ticket--ready .ticket-cup { background: rgba(31, 46, 13, .14); }
         .ticket--ready .ticket-time,
-        .ticket--ready .ticket-who { color: rgba(30, 43, 14, .72); }
-        .ticket--ready .ticket-note { background: rgba(255, 255, 255, .48); color: var(--accent-ink); }
-        .ticket--ready .act { background: var(--accent-ink); color: var(--accent); }
-        .ticket--ready .act:hover { background: #101804; }
-        .ticket--ready .act--kill { background: transparent; color: rgba(30, 43, 14, .5); }
-        .ticket--ready .act--kill:hover { background: rgba(30, 43, 14, .12); color: var(--accent-ink); }
+        .ticket--ready .ticket-who { color: rgba(31, 46, 13, .72); }
+        .ticket--ready .ticket-note { background: rgba(255, 255, 255, .55); color: var(--green-ink); }
+        /* Espresso, not near-black green: keeps the pill inside the warm
+           palette while staying the loudest thing on a ready ticket. */
+        .ticket--ready .act { background: var(--ink); color: var(--card); }
+        .ticket--ready .act:hover { background: #4d3020; }
+        .ticket--ready .act--kill { background: transparent; color: rgba(31, 46, 13, .5); }
+        .ticket--ready .act--kill:hover { background: rgba(31, 46, 13, .13); color: var(--green-ink); }
 
         .ticket--ready .ticket-drink::after {
             content: '☕';
@@ -878,14 +914,15 @@
         /* ---------------- empty state ---------------- */
 
         .empty {
-            padding: 34px 22px;
-            border: 1.5px dashed rgba(251, 246, 234, .18);
+            padding: 30px 22px;
+            border: 2px dashed var(--wood-deep);
             border-radius: var(--r-card);
+            background: rgba(255, 253, 248, .55);
             text-align: center;
         }
 
         .empty .mug {
-            font-size: 2.5rem;
+            font-size: 2.4rem;
             display: block;
             animation: mugSnooze 4s ease-in-out infinite;
         }
@@ -896,32 +933,30 @@
         }
 
         .empty h3 {
-            margin-top: 12px;
+            margin-top: 10px;
             font-family: var(--font-sign);
-            font-size: 1.22rem;
+            font-size: 1.16rem;
             font-weight: 400;
-            color: var(--cream);
+            color: var(--ink);
         }
 
         .empty p {
-            margin-top: 6px;
-            font-size: .9rem;
+            margin-top: 5px;
+            font-size: .89rem;
             line-height: 1.5;
-            color: rgba(251, 246, 234, .55);
+            color: var(--ink-mid);
         }
 
-        /* ---------------- clear all ---------------- */
+        /* ---------------- clear queue ---------------- */
 
-        /* Destructive and rarely wanted, so it reads as a quiet link rather
-           than competing with the section title. */
         .wipe {
             flex: 0 0 auto;
-            min-height: 40px;
+            min-height: 44px;
             padding: 0 12px;
             border: 0;
             border-radius: 999px;
             background: transparent;
-            color: rgba(247, 240, 225, .38);
+            color: var(--ink-soft);
             font-family: inherit;
             font-size: .78rem;
             font-weight: 600;
@@ -930,14 +965,24 @@
         }
 
         .wipe:active { transform: scale(.94); }
-        .wipe:hover { background: rgba(196, 85, 60, .16); color: #eda690; }
+        .wipe:hover { background: rgba(192, 85, 60, .12); color: var(--brick); }
+
+        /* ---------------- footer ---------------- */
+
+        .colophon {
+            margin: 26px 4px 0;
+            font-size: .74rem;
+            font-weight: 500;
+            color: var(--ink-soft);
+            text-align: center;
+        }
 
         /* ---------------- toast ---------------- */
 
         .toasts {
             position: fixed;
             z-index: 80;
-            top: calc(env(safe-area-inset-top) + 12px);
+            top: calc(env(safe-area-inset-top) + 14px);
             right: 12px;
             left: 12px;
             display: grid;
@@ -953,13 +998,12 @@
             font-size: .9rem;
             font-weight: 600;
             text-align: center;
-            box-shadow: var(--shadow-lift);
+            box-shadow: var(--sh-lift);
             animation: toastIn .34s var(--ease-spring);
         }
 
-        .toast--ok { background: var(--accent); color: var(--accent-ink); }
+        .toast--ok { background: var(--green); color: var(--green-ink); }
         .toast--bad { background: var(--brick); color: #fff2ee; }
-
         .toast.is-out { animation: toastOut .3s var(--ease-out) forwards; }
 
         @keyframes toastIn {
@@ -991,9 +1035,9 @@
             height: 236%;
             border-radius: 46% 44% 0 0 / 10% 10% 0 0;
             background:
-                radial-gradient(120% 36% at 50% 4%, rgba(255, 238, 207, .26), rgba(255, 238, 207, 0) 58%),
-                linear-gradient(180deg, #8b5730 0%, #5d3720 44%, #33200f 100%);
-            box-shadow: inset 0 16px 28px rgba(255, 227, 178, .14), inset 0 -40px 88px rgba(20, 10, 4, .46);
+                radial-gradient(120% 36% at 50% 4%, rgba(255, 240, 213, .3), rgba(255, 240, 213, 0) 58%),
+                linear-gradient(180deg, #b07443 0%, #8a5730 44%, #613a1f 100%);
+            box-shadow: inset 0 16px 28px rgba(255, 233, 194, .2), inset 0 -40px 88px rgba(60, 32, 14, .4);
             transform: translate3d(0, 108%, 0);
             will-change: transform;
             animation: coffeeRise 1.5s cubic-bezier(.24, .84, .24, 1) forwards;
@@ -1006,27 +1050,27 @@
             width: 116%;
             height: 150px;
             background:
-                radial-gradient(95% 120% at 50% 100%, rgba(255, 242, 214, .32) 0 26%, rgba(255, 242, 214, 0) 64%),
-                repeating-radial-gradient(circle at 8% 110%, rgba(255, 236, 196, .25) 0 22px, rgba(255, 236, 196, .02) 22px 52px);
+                radial-gradient(95% 120% at 50% 100%, rgba(255, 245, 222, .36) 0 26%, rgba(255, 245, 222, 0) 64%),
+                repeating-radial-gradient(circle at 8% 110%, rgba(255, 240, 205, .27) 0 22px, rgba(255, 240, 205, .02) 22px 52px);
             filter: blur(1px);
             animation: coffeeSurfaceDrift 1.25s ease-in-out infinite;
         }
 
         .celebration-badge {
             position: absolute;
-            top: calc(env(safe-area-inset-top) + 14%);
+            top: calc(env(safe-area-inset-top) + 15%);
             left: 50%;
             z-index: 2;
             max-width: calc(100vw - 32px);
             padding: 13px 24px;
             border-radius: 999px;
-            background: var(--cream);
+            background: var(--card);
             color: var(--ink);
             font-family: var(--font-sign);
-            font-size: clamp(1rem, 4.4vw, 1.3rem);
+            font-size: clamp(1rem, 4.4vw, 1.28rem);
             line-height: 1.25;
             text-align: center;
-            box-shadow: 0 14px 34px rgba(20, 10, 4, .5);
+            box-shadow: 0 14px 34px rgba(60, 32, 14, .4);
             transform: translate(-50%, 22px) scale(.86);
             opacity: 0;
             animation: coffeeBadge 1.7s var(--ease-spring) forwards;
@@ -1040,8 +1084,8 @@
             width: var(--size, 12px);
             height: var(--size, 12px);
             border-radius: 999px;
-            background: radial-gradient(circle at 34% 34%, rgba(255, 255, 255, .95), rgba(255, 255, 255, .26) 40%, rgba(255, 222, 170, .04) 68%, rgba(255, 222, 170, 0) 76%);
-            border: 1px solid rgba(255, 246, 228, .3);
+            background: radial-gradient(circle at 34% 34%, rgba(255, 255, 255, .95), rgba(255, 255, 255, .3) 40%, rgba(255, 226, 178, .05) 68%, rgba(255, 226, 178, 0) 76%);
+            border: 1px solid rgba(255, 248, 232, .34);
             opacity: 0;
             transform: translate3d(0, 0, 0) scale(.46);
             animation: coffeeBubble var(--duration, 1.2s) ease-out forwards;
@@ -1078,13 +1122,8 @@
             100% { opacity: 0; transform: translate3d(var(--drift, 0px), var(--rise, -56vh), 0) scale(1); }
         }
 
-        /* Small burst on the ticket that just became ready. */
-        .pop-layer {
-            position: absolute;
-            inset: 0;
-            overflow: visible;
-            pointer-events: none;
-        }
+        /* Burst on the ticket that just became ready. */
+        .pop-layer { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
 
         .pop {
             position: absolute;
@@ -1095,48 +1134,53 @@
             border-radius: 2px;
             background: var(--c, #fff);
             opacity: 0;
-            animation: popOut .85s var(--ease-out) forwards;
+            animation: popOut .9s cubic-bezier(.25, .7, .35, 1) forwards;
             animation-delay: var(--d, 0s);
         }
 
+        /* Opacity is keyframed with explicit holds. Under a single 0 -> 1 fade
+           the front-loaded curve dropped the confetti to 3% opacity less than
+           halfway through, so the burst was never actually visible. */
         @keyframes popOut {
-            0%   { opacity: 1; transform: translate(0, 0) scale(.4) rotate(0deg); }
+            0%   { opacity: 0; transform: translate(0, 0) scale(.5) rotate(0deg); }
+            12%  { opacity: 1; }
+            65%  { opacity: 1; }
             100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--rot)); }
         }
 
         /* ---------------- desktop ---------------- */
 
-        @media (min-width: 720px) {
-            .shell { padding-bottom: 40px; }
+        @media (min-width: 700px) {
             .menu-grid { grid-template-columns: repeat(3, 1fr); }
 
-            /* Full-width hero would otherwise leave a 500px void, so the
-               lockup spans the card like a counter sign. */
             /* Wide and shallow reads as a counter sign; wide and tall reads as
                an empty box. */
-            .drink--hero { padding: 14px 30px; min-height: 100px; }
-            .drink--hero img { width: 76px; height: 76px; }
-            .drink--hero h3 { font-size: 1.75rem; }
+            .drink--hero { min-height: 98px; padding: 13px 28px; }
+            .drink--hero img { width: 74px; height: 74px; }
+            .drink--hero h3 { font-size: 1.7rem; }
 
             .queue-group + .queue-group { margin-top: 0; }
+
             .sheet {
                 right: auto;
                 left: 50%;
-                bottom: 20px;
-                width: min(560px, calc(100vw - 40px));
-                transform: translate(-50%, calc(100% + 30px));
+                bottom: 18px;
+                width: min(540px, calc(100vw - 40px));
+                border: 1.5px solid var(--hair);
                 border-radius: var(--r-card);
-                box-shadow: 0 3px 0 rgba(111, 156, 56, .5), 0 26px 60px rgba(12, 7, 4, .6);
+                transform: translate(-50%, calc(100% + 28px));
+                box-shadow: 0 22px 50px rgba(120, 82, 45, .32);
             }
+
             .sheet.is-up { transform: translate(-50%, 0); }
         }
 
-        @media (max-width: 380px) {
-            .staff { width: 74px; }
-            .staff-frame { width: 60px; height: 60px; }
-            .drink { min-height: 78px; padding: 12px 13px; gap: 9px; }
+        @media (max-width: 370px) {
+            .staff { width: 82px; }
+            .staff-frame { width: 72px; padding: 5px 5px 18px; }
+            .drink { min-height: 76px; padding: 11px 12px; gap: 9px; }
             .drink img { width: 40px; height: 40px; }
-            .drink h3 { font-size: .92rem; }
+            .drink h3 { font-size: .93rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -1149,29 +1193,29 @@
     </style>
 </head>
 <body>
+    <div class="awning" aria-hidden="true"></div>
+
     <div class="shell">
         <header class="counter">
-            <div class="counter-inner">
-                <div class="wordmark">
-                    <h1>Coffee Shaky</h1>
-                    <p class="tagline">בית קפה משפחתי, ללא כוונת רווח.</p>
+            <div class="wordmark">
+                <h1>Coffee Shaky</h1>
+                <p class="tagline">הקפה הכי טוב ברדיוס של ארבעה מטרים.</p>
+
+                <div class="open-sign" id="connectionStatus">
+                    <span class="bulb" aria-hidden="true"></span>
+                    <span id="connectionText">מדליקים את המכונה</span>
                 </div>
-
-                <button class="staff" id="employeeBanner" type="button"
-                        aria-label="עובד החודש. אמרנו לא ללחוץ.">
-                    <span class="staff-frame">
-                        <img id="employeeImage" src="employee.jpg" alt="עובדת החודש">
-                    </span>
-                    <span class="staff-crown" aria-hidden="true">👑</span>
-                    <span class="staff-tag">עובד החודש<b>אל תלחצו</b></span>
-                    <span class="meow-bubble" aria-hidden="true">מיאו!</span>
-                </button>
             </div>
 
-            <div class="open-sign" id="connectionStatus">
-                <span class="bulb" aria-hidden="true"></span>
-                <span id="connectionText">מדליקים את המכונה</span>
-            </div>
+            <button class="staff" id="employeeBanner" type="button"
+                    aria-label="תלחצו על עובד החודש שיעבוד מהר יותר">
+                <span class="staff-frame">
+                    <img id="employeeImage" src="employee.jpg" alt="עובדת החודש">
+                </span>
+                <span class="staff-crown" aria-hidden="true">👑</span>
+                <span class="staff-tag">תלחצו על עובד החודש שיעבוד מהר יותר</span>
+                <span class="meow-bubble" aria-hidden="true">מיאו!</span>
+            </button>
         </header>
 
         <main>
@@ -1233,12 +1277,14 @@
                 <div id="ordersContainer"></div>
             </section>
         </main>
+
+        <p class="colophon">מטבח קטן, שאיפות גדולות.</p>
     </div>
 
     <form class="sheet" id="orderForm" autocomplete="off">
         <div class="sheet-body">
             <div class="sheet-drink">
-                <img id="sheetIcon" src="" alt="">
+                <img id="sheetIcon" alt="">
                 <strong id="sheetName"></strong>
                 <button class="sheet-swap" type="button" id="sheetSwap">שנה</button>
             </div>
@@ -1255,7 +1301,10 @@
                 <span class="field-error" id="noteError" hidden></span>
             </div>
 
-            <button class="send" type="submit" id="submitBtn">שלח לבריסטה</button>
+            <button class="send" type="submit" id="submitBtn">
+                <span class="cup" aria-hidden="true">☕</span>
+                <span id="submitLabel">שלח לבריסטה</span>
+            </button>
         </div>
     </form>
 
@@ -1327,6 +1376,11 @@
 
         function setupMenuSelection() {
             document.querySelectorAll('.drink').forEach(item => {
+                // The name lives in an <h3> next to an alt="" illustration, so
+                // label the button itself rather than relying on subtree text.
+                item.setAttribute('aria-label', item.dataset.product);
+                item.setAttribute('aria-pressed', 'false');
+
                 item.addEventListener('click', () => {
                     pickDrink(item.dataset.product, item.dataset.icon);
                 });
@@ -1338,8 +1392,9 @@
             selectedIcon = icon;
 
             document.querySelectorAll('.drink').forEach(el => {
-                el.classList.toggle('is-picked', el.dataset.product === product);
-                el.setAttribute('aria-pressed', el.dataset.product === product ? 'true' : 'false');
+                const isPicked = el.dataset.product === product;
+                el.classList.toggle('is-picked', isPicked);
+                el.setAttribute('aria-pressed', isPicked ? 'true' : 'false');
             });
 
             document.getElementById('sheetIcon').src = icon;
@@ -1372,7 +1427,7 @@
             sheet.classList.add('is-up');
             // Keep the queue reachable above the raised sheet.
             requestAnimationFrame(() => {
-                document.querySelector('.shell').style.paddingBottom = (sheet.offsetHeight + 28) + 'px';
+                document.querySelector('.shell').style.paddingBottom = (sheet.offsetHeight + 26) + 'px';
             });
         }
 
@@ -1422,10 +1477,9 @@
             const card = document.querySelector(`.drink[data-product="${cssEscape(usual.product)}"]`);
             if (!card) return;
 
-            const btn = document.getElementById('usualBtn');
             document.getElementById('usualIcon').src = card.dataset.icon;
             document.getElementById('usualLabel').textContent = 'עוד ' + usual.product + '?';
-            btn.hidden = false;
+            document.getElementById('usualBtn').hidden = false;
         }
 
         function rememberUsual(product, customerName, specialRequest) {
@@ -1438,7 +1492,7 @@
             restoreUsual();
         }
 
-        // One tap: refills the exact previous order and lands on the send button.
+        // One tap: refills the exact previous order and raises the sheet.
         function repeatUsual() {
             let usual = null;
             try {
@@ -1469,8 +1523,8 @@
 
             if (!employeeBanner || !employeeImage) return;
 
-            // The ring frame is the element that jumps, so the badge travels
-            // with the photo rather than staying behind.
+            // The polaroid frame is what jumps, so the photo, its border and
+            // the tape travel together instead of the photo leaving the frame.
             const employeeFrame = employeeBanner.querySelector('.staff-frame');
             const originalEmployeeSrc = employeeImage.getAttribute('src');
             const originalEmployeeAlt = employeeImage.getAttribute('alt');
@@ -1527,7 +1581,7 @@
                 }, { once: true });
 
                 // Listen on the bubble itself: animationend bubbles, so a listener
-                // on the button would also catch the image's jump animation.
+                // on the button would also catch the frame's jump animation.
                 const meowBubble = employeeBanner.querySelector('.meow-bubble');
                 if (meowBubble) {
                     meowBubble.addEventListener('animationend', () => {
@@ -1540,7 +1594,7 @@
                     restoreEmployeeImage();
                     employeeBanner.classList.remove('meowing');
                     pumaResetTimeout = null;
-                }, 1100);
+                }, 1150);
             };
 
             employeeBanner.addEventListener('click', triggerPumaJump);
@@ -1620,6 +1674,7 @@
             const nameInput = document.getElementById('customerName');
             const noteInput = document.getElementById('specialRequest');
             const submitBtn = document.getElementById('submitBtn');
+            const submitLabel = document.getElementById('submitLabel');
 
             const customerName = nameInput.value.trim();
             const specialRequest = noteInput.value.trim();
@@ -1642,7 +1697,7 @@
             }
 
             submitBtn.disabled = true;
-            submitBtn.textContent = 'רץ למטבח...';
+            submitLabel.textContent = 'רץ למטבח...';
 
             try {
                 const orderedProduct = selectedProduct;
@@ -1657,7 +1712,7 @@
                     cancelOrder();
                     showToast('אין חיבור. ההזמנה שמורה ותישלח כשהרשת תחזור.', 'bad', 7000);
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'שלח לבריסטה';
+                    submitLabel.textContent = 'שלח לבריסטה';
                 }, 8000);
 
                 try {
@@ -1680,7 +1735,7 @@
                 showToast('ההזמנה לא עברה: ' + error.message, 'bad', 6000);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'שלח לבריסטה';
+                submitLabel.textContent = 'שלח לבריסטה';
             }
         }
 
@@ -1887,7 +1942,7 @@
             layer.className = 'pop-layer';
             layer.setAttribute('aria-hidden', 'true');
 
-            const colors = ['#fbf6ea', '#ffd884', '#6f9c38', '#c4553c'];
+            const colors = ['#fffdf8', '#d98b41', '#62853d', '#c0553c'];
 
             for (let i = 0; i < 10; i++) {
                 const bit = document.createElement('span');
@@ -1901,7 +1956,6 @@
                 layer.appendChild(bit);
             }
 
-            ticket.style.position = 'relative';
             ticket.appendChild(layer);
             setTimeout(() => layer.remove(), 1100);
         }
