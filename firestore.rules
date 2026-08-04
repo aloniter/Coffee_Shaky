@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// These rules mirror the old Supabase RLS policies: the app has no sign-in, so
+// anyone with the URL can read, create, flip status, and delete orders.
+// They do enforce the shape of an order, so the collection cannot be used as
+// free storage by anyone who finds the project id.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /coffee_orders/{orderId} {
+
+      allow read, delete: if true;
+
+      allow create: if request.resource.data.keys().hasOnly(
+                         ['product_name', 'customer_name', 'special_request', 'status', 'created_at'])
+                    && request.resource.data.product_name is string
+                    && request.resource.data.product_name.trim().size() > 0
+                    && request.resource.data.product_name.size() < 100
+                    && request.resource.data.customer_name is string
+                    && request.resource.data.customer_name.trim().size() > 0
+                    && request.resource.data.customer_name.size() < 100
+                    && request.resource.data.special_request is string
+                    && request.resource.data.special_request.size() < 500
+                    && request.resource.data.status == 'preparing'
+                    && request.resource.data.created_at == request.time;
+
+      // Only the status field may change, and only to a known value.
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                    && request.resource.data.status in ['preparing', 'ready'];
+    }
+  }
+}

@@ -557,16 +557,11 @@
         
         .order-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             align-items: center;
             margin-bottom: 10px;
         }
-        
-        .order-id {
-            font-weight: bold;
-            color: #6f4e37;
-        }
-        
+
         .order-time {
             font-size: 0.8em;
             color: #6c757d;
@@ -666,7 +661,7 @@
                 <h2>עובד החודש 🌟</h2>
                 <span class="employee-warning-chip">נא לא ללחוץ על עובד החודש</span>
             </div>
-            <img id="employeeImage" src="employee.jpg" alt="Employee of the Month" onerror="this.style.display='none'">
+            <img id="employeeImage" src="employee.jpg" alt="Employee of the Month">
             <div class="meow-bubble" aria-hidden="true">מיאו!</div>
         </div>
 
@@ -747,8 +742,8 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js"></script>
+    <script src="firebase-config.js"></script>
+    <script type="module" src="firebase-db.js"></script>
     <script>
         // Debug logging function
         function debugLog(message, data = null) {
@@ -761,30 +756,10 @@
             }
         }
 
-        const supabaseConfig = window.COFFEE_SHAKY_CONFIG || {};
-        const SUPABASE_URL = supabaseConfig.url;
-        const SUPABASE_KEY = supabaseConfig.publishableKey;
-        
-        // Initialize Supabase client
-        var supabase;
-        try {
-            if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_KEY.includes('PASTE_')) {
-                throw new Error('Missing Supabase URL or publishable key in supabase-config.js');
-            }
-
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            debugLog('✅ Supabase initialized successfully');
-        } catch (error) {
-            debugLog('❌ Failed to initialize Supabase', error);
-            showError('שגיאה באתחול Supabase: ' + error.message);
-        }
-        
         // Global variables
         let orders = [];
         let selectedProduct = null;
-        let realtimeChannel = null;
-        let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
+        let unsubscribeOrders = null;
         const MEOW_SOUND_FILE = 'מיאו.wav';
         let catMeowAudio = null;
         let pumaResetTimeout = null;
@@ -796,14 +771,19 @@
             initializeApp();
         });
         
-        async function initializeApp() {
+        function initializeApp() {
             try {
                 setupMenuSelection();
                 setupEmployeeOfTheMonth();
-                await testSupabaseConnection();
-                await loadOrders();
-                setupRealtime();
-                updateConnectionStatus(true);
+
+                if (!window.CoffeeDB) {
+                    throw new Error('firebase-db.js did not load');
+                }
+                if (window.CoffeeDB.initError) {
+                    throw window.CoffeeDB.initError;
+                }
+
+                startOrdersStream();
                 debugLog('✅ App initialized successfully');
             } catch (error) {
                 debugLog('❌ Failed to initialize app', error);
@@ -811,31 +791,7 @@
                 updateConnectionStatus(false);
             }
         }
-        
-        async function testSupabaseConnection() {
-            try {
-                debugLog('🔍 Testing Supabase connection...');
-                
-                // Test 1: Check if table exists
-                const { data, error, count } = await supabase
-                    .from('coffee_orders')
-                    .select('*', { count: 'exact', head: true });
-                
-                if (error) {
-                    debugLog('❌ Connection test failed', error);
-                    throw new Error(`Supabase connection error: ${error.message}`);
-                }
-                
-                debugLog('✅ Supabase connection successful');
-                debugLog(`📊 Table has ${count ?? 0} rows`);
-                
-            } catch (error) {
-                debugLog('❌ Connection test error', error);
-                showError('שגיאה בחיבור ל-Supabase. בדוק שה-RLS policies מוגדרים נכון.');
-                throw error;
-            }
-        }
-        
+
         function setupMenuSelection() {
             const menuItems = document.querySelectorAll('.menu-item');
             const specialRequestInput = document.getElementById('specialRequest');
@@ -873,6 +829,32 @@
                 return;
             }
 
+            const meowBubble = employeeBanner.querySelector('.meow-bubble');
+            let originalImageFailed = false;
+
+            // Preload the puma photo so the click-time src swap comes from cache.
+            // Without this it can still be in flight when the animation ends and
+            // we swap back, which aborts the load and fires 'error' on the <img>.
+            const pumaPreload = new Image();
+            pumaPreload.src = 'puma.jpeg';
+
+            // Only a broken original portrait should hide the photo. An aborted
+            // puma load must never leave the element permanently invisible.
+            employeeImage.addEventListener('error', () => {
+                if (employeeImage.getAttribute('src') !== originalEmployeeSrc) {
+                    return;
+                }
+                originalImageFailed = true;
+                employeeImage.style.display = 'none';
+            });
+
+            const restoreEmployeeImage = () => {
+                employeeImage.classList.remove('puma-jump');
+                employeeImage.src = originalEmployeeSrc;
+                employeeImage.alt = originalEmployeeAlt;
+                employeeImage.style.display = originalImageFailed ? 'none' : '';
+            };
+
             const triggerPumaJump = () => {
                 if (pumaResetTimeout) {
                     clearTimeout(pumaResetTimeout);
@@ -893,25 +875,25 @@
                 playCatMeow();
 
                 employeeImage.addEventListener('animationend', () => {
-                    employeeImage.classList.remove('puma-jump');
-                    employeeImage.src = originalEmployeeSrc;
-                    employeeImage.alt = originalEmployeeAlt;
+                    restoreEmployeeImage();
                     if (pumaResetTimeout) {
                         clearTimeout(pumaResetTimeout);
                         pumaResetTimeout = null;
                     }
                 }, { once: true });
 
-                employeeBanner.addEventListener('animationend', () => {
-                    employeeBanner.classList.remove('meowing');
-                }, { once: true });
+                // Listen on the bubble itself: animationend bubbles, so a listener
+                // on the banner would also catch the image's jump animation.
+                if (meowBubble) {
+                    meowBubble.addEventListener('animationend', () => {
+                        employeeBanner.classList.remove('meowing');
+                    }, { once: true });
+                }
 
                 // Fallback in case animationend does not fire.
                 pumaResetTimeout = setTimeout(() => {
-                    employeeImage.classList.remove('puma-jump');
+                    restoreEmployeeImage();
                     employeeBanner.classList.remove('meowing');
-                    employeeImage.src = originalEmployeeSrc;
-                    employeeImage.alt = originalEmployeeAlt;
                     pumaResetTimeout = null;
                 }, 1100);
             };
@@ -961,105 +943,31 @@
             window.speechSynthesis.speak(utterance);
         }
         
-        async function loadOrders() {
-            try {
-                debugLog('📥 Loading orders...');
-                const { data, error } = await supabase
-                    .from('coffee_orders')
-                    .select('*')
-                    .in('status', ['preparing', 'ready'])
-                    .order('created_at', { ascending: false });
-                
-                if (error) {
-                    debugLog('❌ Error loading orders', error);
-                    throw error;
+        // Single live listener: Firestore re-delivers the whole ordered list on
+        // every change and handles reconnection itself, so there is no separate
+        // load step and no manual retry loop.
+        function startOrdersStream() {
+            if (unsubscribeOrders) {
+                unsubscribeOrders();
+            }
+
+            debugLog('🔄 Subscribing to live orders...');
+            unsubscribeOrders = window.CoffeeDB.subscribeToOrders(
+                (liveOrders) => {
+                    orders = liveOrders;
+                    debugLog(`✅ Live update: ${orders.length} orders`);
+                    renderOrders();
+                },
+                (connected, error) => {
+                    updateConnectionStatus(connected);
+                    if (error) {
+                        debugLog('❌ Live orders error', error);
+                        showError('שגיאה בחיבור לשרת: ' + error.message);
+                    }
                 }
-                
-                orders = data || [];
-                debugLog(`✅ Loaded ${orders.length} orders`, data);
-                renderOrders();
-            } catch (error) {
-                debugLog('❌ Error loading orders', error);
-                showError('שגיאה בטעינת ההזמנות: ' + error.message);
-            }
+            );
         }
-        
-        function setupRealtime() {
-            if (realtimeChannel) {
-                supabase.removeChannel(realtimeChannel);
-            }
-            
-            debugLog('🔄 Setting up realtime...');
-            realtimeChannel = supabase
-                .channel('coffee_orders_changes')
-                .on('postgres_changes', 
-                    { 
-                        event: '*', 
-                        schema: 'public', 
-                        table: 'coffee_orders' 
-                    }, 
-                    handleRealtimeChange
-                )
-                .subscribe((status) => {
-                    debugLog(`Realtime status: ${status}`);
-                    if (status === 'SUBSCRIBED') {
-                        updateConnectionStatus(true);
-                        reconnectAttempts = 0;
-                        debugLog('✅ Realtime connected');
-                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                        updateConnectionStatus(false);
-                        attemptReconnect();
-                    }
-                });
-        }
-        
-        function handleRealtimeChange(payload) {
-            debugLog('🔔 Realtime change', payload);
-            
-            const { eventType, new: newRecord, old: oldRecord } = payload;
-            
-            switch (eventType) {
-                case 'INSERT':
-                    if (newRecord.status === 'preparing' || newRecord.status === 'ready') {
-                        orders.unshift(newRecord);
-                    }
-                    break;
-                case 'UPDATE':
-                    const updateIndex = orders.findIndex(order => order.id === newRecord.id);
-                    if (newRecord.status === 'preparing' || newRecord.status === 'ready') {
-                        if (updateIndex !== -1) {
-                            orders[updateIndex] = newRecord;
-                        } else {
-                            orders.unshift(newRecord);
-                        }
-                    } else {
-                        if (updateIndex !== -1) {
-                            orders.splice(updateIndex, 1);
-                        }
-                    }
-                    break;
-                case 'DELETE':
-                    orders = orders.filter(order => order.id !== oldRecord.id);
-                    break;
-            }
-            
-            renderOrders();
-        }
-        
-        function attemptReconnect() {
-            if (reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++;
-                debugLog(`🔄 Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
-                
-                setTimeout(() => {
-                    setupRealtime();
-                }, 2000 * reconnectAttempts);
-            } else {
-                debugLog('❌ Max reconnection attempts reached');
-                showError('אבדה הקישוריות לשרת. אנא רענן את הדף.');
-            }
-        }
-        
+
         function updateConnectionStatus(connected) {
             const statusElement = document.getElementById('connectionStatus');
             if (connected) {
@@ -1101,27 +1009,38 @@
                     special_request: specialRequest
                 });
                 
-                const { data, error } = await supabase
-                    .from('coffee_orders')
-                    .insert([{
-                        product_name: selectedProduct,
-                        customer_name: customerName,
-                        special_request: specialRequest || '',
-                        status: 'preparing'
-                    }])
-                    .select();
-                
-                if (error) {
-                    debugLog('❌ Error submitting order', error);
-                    throw error;
-                }
-                
-                debugLog('✅ Order submitted successfully', data);
                 const orderedProduct = selectedProduct;
+
+                // Firestore queues writes locally and resolves only once the
+                // server acknowledges, so with no connection this never settles.
+                // The order is safely stored and will send by itself, but say so
+                // instead of leaving the button spinning forever.
+                let acknowledged = false;
+                const queuedNotice = setTimeout(() => {
+                    if (acknowledged) return;
+                    debugLog('⏳ Order queued locally, waiting for connection');
+                    cancelOrder();
+                    showError('אין חיבור לשרת. ההזמנה נשמרה ותישלח אוטומטית כשהחיבור יחזור.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'הזמן משקה';
+                }, 8000);
+
+                try {
+                    const newOrderId = await window.CoffeeDB.createOrder({
+                        productName: orderedProduct,
+                        customerName: customerName,
+                        specialRequest: specialRequest
+                    });
+                    debugLog('✅ Order submitted successfully', { id: newOrderId });
+                } finally {
+                    acknowledged = true;
+                    clearTimeout(queuedNotice);
+                }
+
                 cancelOrder();
                 showSuccess('ההזמנה נשלחה בהצלחה!');
                 showOrderCelebration(orderedProduct);
-                
+
             } catch (error) {
                 debugLog('❌ Error submitting order', error);
                 showError('שגיאה בשליחת ההזמנה: ' + error.message);
@@ -1145,12 +1064,7 @@
         async function updateOrderStatus(orderId, newStatus) {
             try {
                 debugLog(`📝 Updating order ${orderId} to ${newStatus}...`);
-                const { error } = await supabase
-                    .from('coffee_orders')
-                    .update({ status: newStatus })
-                    .eq('id', orderId);
-                
-                if (error) throw error;
+                await window.CoffeeDB.updateOrderStatus(orderId, newStatus);
                 debugLog('✅ Order status updated');
                 
             } catch (error) {
@@ -1166,12 +1080,7 @@
             
             try {
                 debugLog(`✅ Completing order ${orderId}...`);
-                const { error } = await supabase
-                    .from('coffee_orders')
-                    .delete()
-                    .eq('id', orderId);
-                
-                if (error) throw error;
+                await window.CoffeeDB.removeOrder(orderId);
                 debugLog('✅ Order completed');
                 
             } catch (error) {
@@ -1187,12 +1096,7 @@
             
             try {
                 debugLog(`🗑️ Deleting order ${orderId}...`);
-                const { error } = await supabase
-                    .from('coffee_orders')
-                    .delete()
-                    .eq('id', orderId);
-                
-                if (error) throw error;
+                await window.CoffeeDB.removeOrder(orderId);
                 debugLog('✅ Order deleted');
                 
             } catch (error) {
@@ -1208,14 +1112,9 @@
             
             try {
                 debugLog('🗑️ Clearing all orders...');
-                const { error } = await supabase
-                    .from('coffee_orders')
-                    .delete()
-                    .neq('id', 0);
-                
-                if (error) throw error;
-                
-                debugLog('✅ All orders cleared');
+                const deletedCount = await window.CoffeeDB.removeAllOrders();
+
+                debugLog(`✅ All orders cleared (${deletedCount})`);
                 showSuccess('כל ההזמנות נמחקו בהצלחה');
                 
             } catch (error) {
@@ -1263,48 +1162,58 @@
         }
         
         function renderOrderCard(order) {
-            const createdAt = new Date(order.created_at);
-            const timeString = createdAt.toLocaleTimeString('he-IL', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
+            const timeString = order.created_at.toLocaleTimeString('he-IL', {
+                hour: '2-digit',
+                minute: '2-digit'
             });
-            
+
             const statusActions = getStatusActions(order.status, order.id);
-            
+
             return `
                 <div class="order-card">
                     <div class="order-header">
-                        <span class="order-id">#${order.id}</span>
                         <span class="order-time">${timeString}</span>
                     </div>
                     <div class="order-details">
-                        <strong>${order.product_name}</strong><br>
-                        לקוח: ${order.customer_name}<br>
-                        ${order.special_request ? `בקשה מיוחדת: ${order.special_request}<br>` : ''}
+                        <strong>${escapeHtml(order.product_name)}</strong><br>
+                        לקוח: ${escapeHtml(order.customer_name)}<br>
+                        ${order.special_request ? `בקשה מיוחדת: ${escapeHtml(order.special_request)}<br>` : ''}
                     </div>
                     <div class="order-actions">
                         ${statusActions}
-                        <button class="btn btn-danger btn-sm" onclick="deleteOrder(${order.id})">
+                        <button class="btn btn-danger btn-sm" onclick="deleteOrder('${escapeHtml(order.id)}')">
                             מחק
                         </button>
                     </div>
                 </div>
             `;
         }
-        
+
         function getStatusActions(currentStatus, orderId) {
+            // Firestore ids are strings, so they have to be quoted in the handlers.
+            const safeId = escapeHtml(orderId);
             const actions = [];
-            
+
             switch (currentStatus) {
                 case 'preparing':
-                    actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus(${orderId}, 'ready')">סמן כמוכן</button>`);
+                    actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus('${safeId}', 'ready')">סמן כמוכן</button>`);
                     break;
                 case 'ready':
-                    actions.push(`<button class="btn btn-sm" onclick="completeOrder(${orderId})">הושלם</button>`);
+                    actions.push(`<button class="btn btn-sm" onclick="completeOrder('${safeId}')">הושלם</button>`);
                     break;
             }
-            
+
             return actions.join('');
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[char]);
         }
 
         function showOrderCelebration(productName) {
