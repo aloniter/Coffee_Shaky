@@ -1,9 +1,8 @@
 rules_version = '2';
 
-// These rules mirror the old Supabase RLS policies: the app has no sign-in, so
-// anyone with the URL can read, create, flip status, and delete orders.
-// They do enforce the shape of an order, so the collection cannot be used as
-// free storage by anyone who finds the project id.
+// The app has no sign-in, so anyone with the URL can read, create, flip status,
+// and delete orders. The rules do enforce the shape of an order, so the
+// collection cannot be used as free storage by anyone who finds the project id.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /coffee_orders/{orderId} {

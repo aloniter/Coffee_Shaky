@@ -53,8 +53,21 @@ The values in `firebase-config.js` are meant to be public — Firebase web confi
 are not secrets. Never put a service-account JSON or admin private key in this
 folder.
 
-## Rolling back to Supabase
+## Deploying
 
-The old files are still here: `supabase-config.js`, `supabase-setup.sql`, and
-`SUPABASE_SETUP.md`. To revert, restore the two Supabase `<script>` tags in
-`index.html` and the previous data-layer functions from git history.
+The app is a set of static files served by GitHub Pages from the `main` branch
+of `aloniter/Coffee_Shaky`, at https://aloniter.github.io/Coffee_Shaky/.
+Pushing to `main` publishes; the rebuild takes about a minute.
+
+Firebase is used only for Firestore — there is no Firebase Hosting.
+
+Security rules live in `firestore.rules` and are **not** deployed by pushing to
+GitHub. Publish them either in the Firebase Console under
+Firestore Database > Rules, or from this folder:
+
+```bash
+npx firebase-tools deploy --only firestore:rules
+```
+
+Supabase was the previous backend and has been removed. To see how it worked,
+check the git history before the Firestore migration commit.
