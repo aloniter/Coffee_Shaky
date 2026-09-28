@@ -1252,9 +1252,9 @@
                         <h3>אמריקנו</h3>
                     </button>
 
-                    <button class="drink" type="button" data-product="קפה יובל" data-icon="./flatWhiteIcon.svg">
+                    <button class="drink" type="button" data-product="פלאט וויט" data-icon="./flatWhiteIcon.svg">
                         <img src="./flatWhiteIcon.svg" alt="">
-                        <h3>קפה יובל</h3>
+                        <h3>פלאט וויט</h3>
                     </button>
 
                     <button class="drink" type="button" data-product="תה" data-icon="./teaIcon.png">
@@ -1323,7 +1323,6 @@
         let unsubscribeOrders = null;
 
         const MEOW_SOUND_FILE = 'מיאו.wav';
-        const NAME_KEY = 'coffeeShaky.name';
         const USUAL_KEY = 'coffeeShaky.usual';
 
         let catMeowAudio = null;
@@ -1387,7 +1386,7 @@
             });
         }
 
-        function pickDrink(product, icon, options = {}) {
+        function pickDrink(product, icon) {
             selectedProduct = product;
             selectedIcon = icon;
 
@@ -1411,8 +1410,6 @@
             clearFieldError('noteField', 'noteError');
 
             openSheet();
-
-            if (options.silentFocus) return;
 
             const nameInput = document.getElementById('customerName');
             if (isOther) {
@@ -1447,11 +1444,6 @@
                 document.querySelector('.menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
 
-            const savedName = localStorage.getItem(NAME_KEY);
-            if (savedName) {
-                document.getElementById('customerName').value = savedName;
-            }
-
             document.getElementById('customerName').addEventListener('input', () => {
                 clearFieldError('nameField', 'nameError');
             });
@@ -1482,9 +1474,8 @@
             document.getElementById('usualBtn').hidden = false;
         }
 
-        function rememberUsual(product, customerName, specialRequest) {
+        function rememberUsual(product, specialRequest) {
             try {
-                localStorage.setItem(NAME_KEY, customerName);
                 localStorage.setItem(USUAL_KEY, JSON.stringify({ product, specialRequest }));
             } catch (error) {
                 debugLog('could not save the usual', error);
@@ -1492,7 +1483,9 @@
             restoreUsual();
         }
 
-        // One tap: refills the exact previous order and raises the sheet.
+        // One tap: refills the previous drink and note and raises the sheet.
+        // The name is left empty: the phone is shared, so whoever orders
+        // types their own name.
         function repeatUsual() {
             let usual = null;
             try {
@@ -1505,9 +1498,8 @@
             const card = document.querySelector(`.drink[data-product="${cssEscape(usual.product)}"]`);
             if (!card) return;
 
-            pickDrink(usual.product, card.dataset.icon, { silentFocus: true });
+            pickDrink(usual.product, card.dataset.icon);
             document.getElementById('specialRequest').value = usual.specialRequest || '';
-            document.getElementById('customerName').value = localStorage.getItem(NAME_KEY) || '';
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -1707,9 +1699,11 @@
                 // The order is safely stored and will send by itself, but say so
                 // instead of leaving the button spinning forever.
                 let acknowledged = false;
+                let formReset = false;
                 const queuedNotice = setTimeout(() => {
                     if (acknowledged) return;
-                    cancelOrder();
+                    formReset = true;
+                    resetOrderForm();
                     showToast('אין חיבור. ההזמנה שמורה ותישלח כשהרשת תחזור.', 'bad', 7000);
                     submitBtn.disabled = false;
                     submitLabel.textContent = 'שלח לבריסטה';
@@ -1726,8 +1720,10 @@
                     clearTimeout(queuedNotice);
                 }
 
-                rememberUsual(orderedProduct, customerName, specialRequest);
-                cancelOrder();
+                rememberUsual(orderedProduct, specialRequest);
+                // A late acknowledgement must not wipe a form the next person
+                // has already started filling in.
+                if (!formReset) resetOrderForm();
                 showOrderCelebration(orderedProduct);
 
             } catch (error) {
@@ -1739,8 +1735,8 @@
             }
         }
 
-        // Keeps the remembered name on purpose: in a family of five you should
-        // never type your own name twice.
+        // Keeps the typed name, so switching drinks mid-order does not make
+        // you type it again. resetOrderForm() clears it once the order is sent.
         function cancelOrder() {
             closeSheet();
             document.getElementById('specialRequest').value = '';
@@ -1751,6 +1747,12 @@
                 item.classList.remove('is-picked');
                 item.setAttribute('aria-pressed', 'false');
             });
+        }
+
+        // After an order goes out the next person starts from an empty name.
+        function resetOrderForm() {
+            cancelOrder();
+            document.getElementById('customerName').value = '';
         }
 
         async function updateOrderStatus(orderId, newStatus) {
