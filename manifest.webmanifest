@@ -1,0 +1,13 @@
+{
+  "id": "./",
+  "name": "Coffee Shaky",
+  "short_name": "Coffee Shaky",
+  "description": "בית הקפה המשפחתי שלנו. בוחרים משקה, כותבים שם, והקפה בדרך.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6ecd9",
+  "theme_color": "#f6ecd9"
+}
