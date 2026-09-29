@@ -6,14 +6,15 @@
 // so window.CoffeeDB is always ready by the time initializeApp() runs.
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js';
 import {
-    getFirestore,
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager,
     collection,
     doc,
     query,
     orderBy,
     onSnapshot,
-    getDocs,
-    addDoc,
+    setDoc,
     updateDoc,
     deleteDoc,
     writeBatch,
@@ -37,9 +38,29 @@ try {
         throw new Error('firebase-config.js is missing: ' + missing.join(', '));
     }
 
-    ordersRef = collection(getFirestore(initializeApp(config)), COLLECTION);
+    // Persistent cache: an order sent with no connection is kept in IndexedDB,
+    // so it still reaches the kitchen after the app is closed or reloaded.
+    const db = initializeFirestore(initializeApp(config), {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+    ordersRef = collection(db, COLLECTION);
 } catch (error) {
     initError = error;
+}
+
+// When IndexedDB is unavailable Firestore quietly falls back to a memory cache,
+// and then a queued order dies with the app. Check for ourselves so the app
+// only promises "saved on this phone" when that is true.
+let persistentCache = false;
+
+try {
+    const probe = indexedDB.open('coffee-shaky-probe');
+    probe.onsuccess = () => {
+        probe.result.close();
+        persistentCache = true;
+    };
+} catch (error) {
+    persistentCache = false;
 }
 
 function requireReady() {
@@ -64,20 +85,24 @@ function toOrder(docSnap) {
         customer_name: data.customer_name || '',
         special_request: data.special_request || '',
         status: ACTIVE_STATUSES.includes(data.status) ? data.status : 'preparing',
-        created_at: createdAt
+        created_at: createdAt,
+        // A change made on this device that the server has not confirmed yet.
+        pending: docSnap.metadata.hasPendingWrites
     };
 }
 
-// One live listener replaces the old load + subscribe + manual-patch + reconnect
-// cycle: every change re-delivers the full ordered list, and the SDK reconnects
-// on its own. Returns an unsubscribe function.
+// One live listener: every change re-delivers the full list, oldest first, and
+// the SDK reconnects on its own. Metadata changes are included so that going
+// offline, coming back, and a write being confirmed all reach the UI even when
+// no order changed. Returns an unsubscribe function.
 function subscribeToOrders(onOrders, onConnectionChange) {
     requireReady();
 
     // No status filter in the query: only 'preparing' and 'ready' are ever
     // stored, and filtering client-side avoids needing a composite index.
     return onSnapshot(
-        query(ordersRef, orderBy('created_at', 'desc')),
+        query(ordersRef, orderBy('created_at', 'asc')),
+        { includeMetadataChanges: true },
         snapshot => {
             const orders = snapshot.docs
                 .map(toOrder)
@@ -98,17 +123,30 @@ function subscribeToOrders(onOrders, onConnectionChange) {
     );
 }
 
-async function createOrder({ productName, customerName, specialRequest }) {
+// The id is made on the device before anything is sent, so the order has one
+// identity from the first tap: the SDK retries it under that id, and the UI can
+// follow it from "waiting for the network" to "in the kitchen".
+function newOrderId() {
+    requireReady();
+    return doc(ordersRef).id;
+}
+
+// Resolves only once the server has the order. With no connection it stays
+// pending while the SDK holds the write and sends it when the network returns.
+async function createOrder({ id, productName, customerName, specialRequest }) {
     requireReady();
 
     const product = (productName || '').trim();
     const customer = (customerName || '').trim();
 
+    if (!id) {
+        throw new Error('חסר מזהה הזמנה');
+    }
     if (!product || !customer) {
         throw new Error('חסר שם לקוח או משקה');
     }
 
-    const created = await addDoc(ordersRef, {
+    await setDoc(doc(ordersRef, id), {
         product_name: product,
         customer_name: customer,
         special_request: (specialRequest || '').trim(),
@@ -116,7 +154,7 @@ async function createOrder({ productName, customerName, specialRequest }) {
         created_at: serverTimestamp()
     });
 
-    return created.id;
+    return id;
 }
 
 async function updateOrderStatus(orderId, status) {
@@ -134,27 +172,28 @@ async function removeOrder(orderId) {
     await deleteDoc(doc(ordersRef, orderId));
 }
 
-// Firestore has no "delete where", so read the ids and batch the deletes.
-async function removeAllOrders() {
+// Deletes exactly the orders the caller was looking at, so an order that
+// lands while "clear" is being confirmed survives. Works offline too: the
+// batch is queued like any other write.
+async function removeOrders(orderIds) {
     requireReady();
 
-    const snapshot = await getDocs(ordersRef);
-    const docs = snapshot.docs;
-
-    for (let i = 0; i < docs.length; i += BATCH_LIMIT) {
+    for (let i = 0; i < orderIds.length; i += BATCH_LIMIT) {
         const batch = writeBatch(ordersRef.firestore);
-        docs.slice(i, i + BATCH_LIMIT).forEach(docSnap => batch.delete(docSnap.ref));
+        orderIds.slice(i, i + BATCH_LIMIT).forEach(id => batch.delete(doc(ordersRef, id)));
         await batch.commit();
     }
 
-    return docs.length;
+    return orderIds.length;
 }
 
 window.CoffeeDB = {
     initError,
+    hasPersistentCache: () => persistentCache,
     subscribeToOrders,
+    newOrderId,
     createOrder,
     updateOrderStatus,
     removeOrder,
-    removeAllOrders
+    removeOrders
 };

@@ -7,8 +7,17 @@
     <meta name="description" content="בית הקפה המשפחתי שלנו. בוחרים משקה, כותבים שם, והקפה בדרך.">
     <meta name="theme-color" content="#f6ecd9">
 
-    <link rel="icon" type="image/png" href="appicon.png">
-    <link rel="apple-touch-icon" href="appicon.png">
+    <!-- Home Screen app: no Safari bars, its own name, dark status bar text
+         on the cream page ("black-translucent" would turn it white). -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Coffee Shaky">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Cut from coffee-shaky-premium-icon.png, the source of truth. -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +33,7 @@
 
            Two accents with fixed jobs, never swapped:
              green   = go / actionable  (selected drink, send, ready orders)
-             caramel = warm highlight    (house drink, the usual, details)
+             caramel = warm highlight    (house drink, details)
 
            Radius rule: containers 20px, recessed blocks 12px, anything
            interactive is a full pill.
@@ -83,6 +92,17 @@
 
         html { -webkit-text-size-adjust: 100%; }
 
+        /* App-like touch: no double-tap zoom on buttons, and no long-press
+           callout or text selection on controls and artwork. */
+        button {
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        button, img { -webkit-touch-callout: none; }
+        img { -webkit-user-drag: none; -webkit-user-select: none; user-select: none; }
+
         body {
             font-family: var(--font-ui);
             background: var(--page);
@@ -91,6 +111,9 @@
             direction: rtl;
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
+            /* Zero in Safari; clears the status bar if iOS ever draws the
+               Home Screen app underneath it. */
+            padding-top: env(safe-area-inset-top);
         }
 
         /* coffee-bg.jpeg blurred almost to nothing: enough to give the cream a
@@ -115,7 +138,8 @@
             z-index: 1;
             max-width: 720px;
             margin: 0 auto;
-            padding: 0 15px calc(30px + env(safe-area-inset-bottom));
+            /* Side insets keep content off the notch in iPhone landscape. */
+            padding: 0 max(15px, env(safe-area-inset-right)) calc(30px + env(safe-area-inset-bottom)) max(15px, env(safe-area-inset-left));
         }
 
         /* ---------------- awning ---------------- */
@@ -126,7 +150,6 @@
         .awning {
             position: relative;
             height: 8px;
-            margin: 0 -15px;
             background: repeating-linear-gradient(90deg,
                 var(--caramel-soft) 0 15px, #fdf7ea 15px 30px);
         }
@@ -149,10 +172,13 @@
         .counter {
             display: flex;
             align-items: flex-start;
-            gap: 14px;
-            /* Top padding is headroom for the jumping polaroid, which is a lot
-               taller than a round avatar and otherwise clips off-screen. */
-            padding: 38px 4px 22px;
+            gap: 12px;
+            /* Top padding is headroom for the jumping polaroid and its crown.
+               The jump and the crown were tuned to fit in it, rather than the
+               header growing to fit them. */
+            padding: 26px 4px 10px;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .wordmark { flex: 1; min-width: 0; padding-top: 4px; }
@@ -178,7 +204,7 @@
         }
 
         .tagline {
-            margin-top: 9px;
+            margin-top: 7px;
             font-size: .84rem;
             font-weight: 500;
             line-height: 1.4;
@@ -191,7 +217,8 @@
         /* A crooked polaroid taped to the wall, not an avatar chip. */
         .staff {
             flex: 0 0 auto;
-            width: 96px;
+            /* Wider than the 84px frame so the caption fits on two lines. */
+            width: 112px;
             padding: 0;
             border: 0;
             background: none;
@@ -253,13 +280,14 @@
 
         /* Startled, not launched: the polaroid is ~112px tall, so a big hop
            plus a 1.3 scale threw it clean off the top of the screen. The comedy
-           is in the swing, which costs no vertical room. */
+           is in the swing, which costs no vertical room, so the hop is small
+           enough to stay inside the header's 26px of headroom. */
         @keyframes pumaJump {
             0%   { transform: rotate(-3.5deg) translateY(0) scale(1); }
-            16%  { transform: rotate(7deg) translateY(-7px) scale(1.06); }
-            40%  { transform: rotate(-13deg) translateY(-14px) scale(1.12); }
-            60%  { transform: rotate(10deg) translateY(-4px) scale(1.07); }
-            78%  { transform: rotate(-7deg) translateY(4px) scale(.97); }
+            16%  { transform: rotate(7deg) translateY(-4px) scale(1.05); }
+            40%  { transform: rotate(-13deg) translateY(-8px) scale(1.08); }
+            60%  { transform: rotate(10deg) translateY(-2px) scale(1.06); }
+            78%  { transform: rotate(-7deg) translateY(3px) scale(.97); }
             90%  { transform: rotate(2deg) translateY(1px) scale(1.01); }
             100% { transform: rotate(-3.5deg) translateY(0) scale(1); }
         }
@@ -278,15 +306,15 @@
 
         @keyframes crownPop {
             0%   { opacity: 0; transform: translate(-50%, 8px) scale(.5) rotate(0deg); }
-            34%  { opacity: 1; transform: translate(-50%, -21px) scale(1.18) rotate(-13deg); }
-            70%  { opacity: 1; transform: translate(-50%, -25px) scale(1) rotate(11deg); }
-            100% { opacity: 0; transform: translate(-50%, -33px) scale(.9) rotate(0deg); }
+            34%  { opacity: 1; transform: translate(-50%, -16px) scale(1.18) rotate(-13deg); }
+            70%  { opacity: 1; transform: translate(-50%, -19px) scale(1) rotate(11deg); }
+            100% { opacity: 0; transform: translate(-50%, -25px) scale(.9) rotate(0deg); }
         }
 
         /* The nudge to press it. Small and dry, so it reads as an aside. */
         .staff-tag {
-            margin-top: 9px;
-            font-size: .6rem;
+            margin-top: 7px;
+            font-size: .62rem;
             font-weight: 600;
             line-height: 1.3;
             text-align: center;
@@ -335,7 +363,7 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            margin: 13px 0 0;
+            margin: 10px 0 0;
             padding: 6px 13px 6px 11px;
             border-radius: 999px;
             font-size: .72rem;
@@ -363,6 +391,7 @@
             100% { box-shadow: 0 0 0 0 rgba(98, 133, 61, 0); }
         }
 
+        .open-sign.is-warming { color: var(--caramel-deep); border-color: rgba(217, 139, 65, .5); }
         .open-sign.is-shut { color: var(--brick); border-color: rgba(192, 85, 60, .45); }
 
         /* ---------------- sections ---------------- */
@@ -392,31 +421,6 @@
         }
 
         section + section { margin-top: 28px; }
-
-        /* ---------------- the usual ---------------- */
-
-        .usual {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            max-width: 100%;
-            min-height: 44px;
-            padding: 6px 8px 6px 15px;
-            border: 1.5px solid var(--caramel);
-            border-radius: 999px;
-            background: var(--caramel-wash);
-            color: var(--caramel-deep);
-            font-family: inherit;
-            font-size: .8rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform .2s var(--ease-spring), background .2s;
-        }
-
-        .usual:active { transform: scale(.95); }
-        .usual:hover { background: #f7e2c6; }
-        .usual img { width: 26px; height: 26px; object-fit: contain; }
-        .usual span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* ---------------- drink picker ---------------- */
 
@@ -567,7 +571,7 @@
             right: 0;
             bottom: 0;
             left: 0;
-            padding: 13px 15px calc(15px + env(safe-area-inset-bottom));
+            padding: 13px max(15px, env(safe-area-inset-right)) calc(15px + env(safe-area-inset-bottom)) max(15px, env(safe-area-inset-left));
             background: var(--card);
             border-top: 1.5px solid var(--hair);
             border-radius: 24px 24px 0 0;
@@ -576,7 +580,10 @@
             transition: transform .34s var(--ease-out);
         }
 
-        .sheet.is-up { transform: translateY(0); }
+        /* --kb is how much of the screen the iOS keyboard covers, so the
+           sheet rides above it instead of hiding the send button. */
+        .sheet.is-up { transform: translateY(calc(-1 * var(--kb, 0px))); }
+        .sheet.has-kb { padding-bottom: 12px; }
 
         .sheet-body {
             max-width: 690px;
@@ -607,23 +614,23 @@
             white-space: nowrap;
         }
 
-        .sheet-swap {
+        .sheet-close {
             flex: 0 0 auto;
+            width: 44px;
             min-height: 44px;
-            padding: 0 16px;
+            padding: 0;
             border: 1.5px solid var(--hair);
             border-radius: 999px;
             background: transparent;
             color: var(--ink-mid);
             font-family: inherit;
-            font-size: .8rem;
+            font-size: 1.05rem;
             font-weight: 600;
             cursor: pointer;
             transition: transform .18s var(--ease-spring), border-color .2s, color .2s;
         }
 
-        .sheet-swap:active { transform: scale(.94); }
-        .sheet-swap:hover { border-color: var(--ink-mid); color: var(--ink); }
+        .sheet-close:active { transform: scale(.94); }
 
         .field { display: grid; gap: 5px; }
 
@@ -747,6 +754,8 @@
             background: var(--card);
             color: var(--ink);
             box-shadow: var(--sh-rest);
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .ticket.is-new { animation: ticketIn .5s var(--ease-spring); }
@@ -824,7 +833,29 @@
             font-size: .86rem;
             line-height: 1.4;
             color: var(--ink);
+            -webkit-user-select: text;
+            user-select: text;
         }
+
+        /* On this phone but not on the server yet: offline, or a slow write.
+           Dashed like a ticket that has not been torn off the pad. */
+        .ticket.is-pending { border-style: dashed; border-color: var(--wood-deep); box-shadow: none; }
+        .ticket--ready.is-pending { border-color: var(--green-deep); }
+
+        .ticket-pending {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 7px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: var(--caramel-wash);
+            color: var(--caramel-deep);
+            font-size: .74rem;
+            font-weight: 700;
+        }
+
+        .ticket--ready .ticket-pending { background: rgba(255, 255, 255, .6); color: var(--green-ink); }
 
         .ticket-actions {
             display: flex;
@@ -848,7 +879,6 @@
         }
 
         .act:active { transform: scale(.94); }
-        .act:hover { background: #4d3020; }
 
         .act--go {
             background: var(--green);
@@ -857,7 +887,6 @@
         }
 
         .act--go:active { transform: translateY(3px); box-shadow: 0 0 0 var(--green-deep); }
-        .act--go:hover { background: #96b96e; }
 
         .act--kill {
             min-width: 44px;
@@ -867,8 +896,6 @@
             color: var(--ink-soft);
             font-size: 1rem;
         }
-
-        .act--kill:hover { background: rgba(192, 85, 60, .12); color: var(--brick); }
 
         /* Ready tickets are filled, not merely recoloured. */
         .ticket--ready {
@@ -885,9 +912,7 @@
         /* Espresso, not near-black green: keeps the pill inside the warm
            palette while staying the loudest thing on a ready ticket. */
         .ticket--ready .act { background: var(--ink); color: var(--card); }
-        .ticket--ready .act:hover { background: #4d3020; }
         .ticket--ready .act--kill { background: transparent; color: rgba(31, 46, 13, .5); }
-        .ticket--ready .act--kill:hover { background: rgba(31, 46, 13, .13); color: var(--green-ink); }
 
         .ticket--ready .ticket-drink::after {
             content: '☕';
@@ -909,6 +934,18 @@
             35%  { transform: scale(1.05) rotate(-1.4deg); }
             65%  { transform: scale(1.02) rotate(1deg); }
             100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* Hover only where a pointer can hover. On touch screens iOS leaves
+           :hover stuck on whatever was tapped last. */
+        @media (hover: hover) {
+            .sheet-close:hover { border-color: var(--ink-mid); color: var(--ink); }
+            .act:hover { background: #4d3020; }
+            .act--go:hover { background: #96b96e; }
+            .act--kill:hover { background: rgba(192, 85, 60, .12); color: var(--brick); }
+            .ticket--ready .act:hover { background: #4d3020; }
+            .ticket--ready .act--kill:hover { background: rgba(31, 46, 13, .13); color: var(--green-ink); }
+            .wipe:hover { background: rgba(192, 85, 60, .12); color: var(--brick); }
         }
 
         /* ---------------- empty state ---------------- */
@@ -965,7 +1002,6 @@
         }
 
         .wipe:active { transform: scale(.94); }
-        .wipe:hover { background: rgba(192, 85, 60, .12); color: var(--brick); }
 
         /* ---------------- footer ---------------- */
 
@@ -976,6 +1012,72 @@
             color: var(--ink-soft);
             text-align: center;
         }
+
+        /* ---------------- confirm sheet ---------------- */
+
+        /* Replaces window.confirm(), which on iOS is a system alert titled
+           with the site address. */
+        .scrim {
+            position: fixed;
+            z-index: 70;
+            inset: 0;
+            background: rgba(58, 35, 23, .3);
+            touch-action: none;
+            animation: scrimIn .2s ease-out;
+        }
+
+        .confirm {
+            position: fixed;
+            z-index: 71;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            display: grid;
+            gap: 10px;
+            padding: 22px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            border-top: 1.5px solid var(--hair);
+            border-radius: 24px 24px 0 0;
+            background: var(--card);
+            box-shadow: 0 -14px 40px rgba(120, 82, 45, .28);
+            text-align: center;
+            animation: confirmUp .32s var(--ease-out);
+        }
+
+        .confirm-icon { font-size: 2rem; line-height: 1; }
+
+        .confirm h3 {
+            font-family: var(--font-sign);
+            font-size: 1.3rem;
+            font-weight: 400;
+            line-height: 1.25;
+            color: var(--ink);
+            text-wrap: balance;
+        }
+
+        .confirm p {
+            margin-bottom: 6px;
+            font-size: .9rem;
+            line-height: 1.45;
+            color: var(--ink-mid);
+        }
+
+        .confirm button {
+            min-height: 52px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform .16s var(--ease-spring);
+        }
+
+        .confirm button:active { transform: scale(.97); }
+        .confirm button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+        .confirm-yes { border: 0; background: var(--brick); color: #fff2ee; }
+        .confirm-no { border: 1.5px solid var(--hair); background: transparent; color: var(--ink); }
+
+        @keyframes scrimIn { from { opacity: 0; } }
+        @keyframes confirmUp { from { transform: translateY(100%); } }
 
         /* ---------------- toast ---------------- */
 
@@ -1172,11 +1274,47 @@
                 box-shadow: 0 22px 50px rgba(120, 82, 45, .32);
             }
 
-            .sheet.is-up { transform: translate(-50%, 0); }
+            .sheet.is-up { transform: translate(-50%, calc(-1 * var(--kb, 0px))); }
+
+            .confirm {
+                bottom: 18px;
+                width: min(420px, calc(100vw - 40px));
+                margin: 0 auto;
+                border: 1.5px solid var(--hair);
+                border-radius: var(--r-card);
+            }
+        }
+
+        /* iPad landscape: menu and queue side by side, so ordering and
+           watching the queue happen on one screen. */
+        @media (min-width: 1024px) and (orientation: landscape) {
+            .shell { max-width: 1140px; }
+
+            main {
+                display: grid;
+                grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+                gap: 36px;
+                align-items: start;
+            }
+
+            section + section { margin-top: 0; }
+            .menu-grid { grid-template-columns: 1fr 1fr; }
+            .queue-columns { grid-template-columns: 1fr; }
+            .queue-group + .queue-group { margin-top: 18px; }
+
+            /* The sheet sits under the menu column instead of over the queue. */
+            .sheet {
+                right: calc(max(0px, (100vw - 1140px) / 2) + 15px);
+                left: auto;
+                width: calc((min(100vw, 1140px) - 66px) * 1.05 / 2.05);
+                transform: translateY(calc(100% + 28px));
+            }
+
+            .sheet.is-up { transform: translateY(calc(-1 * var(--kb, 0px))); }
         }
 
         @media (max-width: 370px) {
-            .staff { width: 82px; }
+            .staff { width: 96px; }
             .staff-frame { width: 72px; padding: 5px 5px 18px; }
             .drink { min-height: 76px; padding: 11px 12px; gap: 9px; }
             .drink img { width: 40px; height: 40px; }
@@ -1222,10 +1360,6 @@
             <section class="menu" aria-labelledby="menuHead">
                 <div class="section-head">
                     <h2 id="menuHead">מה שותים?</h2>
-                    <button class="usual" id="usualBtn" type="button" hidden>
-                        <img id="usualIcon" alt="">
-                        <span id="usualLabel"></span>
-                    </button>
                 </div>
 
                 <div class="menu-grid">
@@ -1286,7 +1420,7 @@
             <div class="sheet-drink">
                 <img id="sheetIcon" alt="">
                 <strong id="sheetName"></strong>
-                <button class="sheet-swap" type="button" id="sheetSwap">שנה</button>
+                <button class="sheet-close" type="button" id="sheetClose" aria-label="סגור">✕</button>
             </div>
 
             <div class="field" id="nameField">
@@ -1308,6 +1442,16 @@
         </div>
     </form>
 
+    <div class="scrim" id="confirmScrim" hidden></div>
+    <div class="confirm" id="confirmSheet" role="alertdialog" aria-modal="true"
+         aria-labelledby="confirmTitle" aria-describedby="confirmBody" hidden>
+        <span class="confirm-icon" id="confirmIcon" aria-hidden="true"></span>
+        <h3 id="confirmTitle"></h3>
+        <p id="confirmBody"></p>
+        <button class="confirm-yes" id="confirmYes" type="button"></button>
+        <button class="confirm-no" id="confirmNo" type="button"></button>
+    </div>
+
     <div class="toasts" id="toasts" aria-live="polite"></div>
 
     <script src="firebase-config.js"></script>
@@ -1323,7 +1467,6 @@
         let unsubscribeOrders = null;
 
         const MEOW_SOUND_FILE = 'מיאו.wav';
-        const USUAL_KEY = 'coffeeShaky.usual';
 
         let catMeowAudio = null;
         let pumaResetTimeout = null;
@@ -1335,6 +1478,24 @@
         const seenOrderIds = new Set();
         const knownStatuses = new Map();
         let firstRenderDone = false;
+
+        // Connection, from Firestore metadata so it is right even on an idle
+        // screen: "warming" until the first server answer, then open or shut.
+        let isConnected = false;
+        let startupGrace = true;
+        const STARTUP_GRACE_MS = 8000;
+
+        // One order in flight at a time. If the server has not answered by
+        // then, the order is handed to the offline queue and the form freed.
+        let sendInFlight = false;
+        const HANDOFF_ONLINE_MS = 4000;
+        const HANDOFF_OFFLINE_MS = 700;
+
+        // A change only shows as "waiting for the network" after this long,
+        // so the normal ~100ms round trip never flashes a badge.
+        const PENDING_VISIBLE_MS = 1500;
+        const pendingSince = new Map();
+        let pendingTimer = null;
 
         const EMPTY_LINES = [
             { title: 'התור ריק.', body: 'הבריסטה גולל ברשתות. זה הזמן לנצל את זה.' },
@@ -1352,8 +1513,13 @@
                 setupMenuSelection();
                 setupOrderSheet();
                 setupEmployeeOfTheMonth();
-                restoreUsual();
+                setupConnectionStatus();
+                trackKeyboard();
                 renderOrders();
+
+                // iOS only applies :active press styles when the page listens
+                // for touches; without this taps show no pressed feedback.
+                document.addEventListener('touchstart', () => {}, { passive: true });
 
                 if (!window.CoffeeDB) {
                     throw new Error('firebase-db.js did not load');
@@ -1367,6 +1533,7 @@
             } catch (error) {
                 debugLog('init failed', error);
                 showToast('המכונה לא מתניעה: ' + error.message, 'bad', 7000);
+                startupGrace = false;
                 updateConnectionStatus(false);
             }
         }
@@ -1380,13 +1547,13 @@
                 item.setAttribute('aria-label', item.dataset.product);
                 item.setAttribute('aria-pressed', 'false');
 
-                item.addEventListener('click', () => {
-                    pickDrink(item.dataset.product, item.dataset.icon);
-                });
+                item.addEventListener('click', () => pickDrink(item));
             });
         }
 
-        function pickDrink(product, icon) {
+        function pickDrink(card) {
+            const product = card.dataset.product;
+            const icon = card.dataset.icon;
             selectedProduct = product;
             selectedIcon = icon;
 
@@ -1409,28 +1576,60 @@
             clearFieldError('nameField', 'nameError');
             clearFieldError('noteField', 'noteError');
 
-            openSheet();
+            openSheet(card);
 
+            // preventScroll: the sheet is fixed, and openSheet already brings
+            // the picked drink into view.
             const nameInput = document.getElementById('customerName');
             if (isOther) {
-                document.getElementById('specialRequest').focus();
+                document.getElementById('specialRequest').focus({ preventScroll: true });
             } else if (!nameInput.value.trim()) {
-                nameInput.focus();
+                nameInput.focus({ preventScroll: true });
             }
         }
 
-        function openSheet() {
+        function openSheet(card) {
             const sheet = document.getElementById('orderForm');
             sheet.classList.add('is-up');
-            // Keep the queue reachable above the raised sheet.
+
             requestAnimationFrame(() => {
+                // Keep the queue reachable above the raised sheet.
                 document.querySelector('.shell').style.paddingBottom = (sheet.offsetHeight + 26) + 'px';
+
+                // And keep the drink you just picked in sight above it.
+                const bottomGap = parseFloat(getComputedStyle(sheet).bottom) || 0;
+                const sheetTop = window.innerHeight - bottomGap - sheet.offsetHeight;
+                const overlap = card.getBoundingClientRect().bottom + 12 - sheetTop;
+                if (overlap > 0) window.scrollBy({ top: overlap, behavior: 'smooth' });
             });
         }
 
         function closeSheet() {
-            document.getElementById('orderForm').classList.remove('is-up');
+            const sheet = document.getElementById('orderForm');
+            sheet.classList.remove('is-up');
             document.querySelector('.shell').style.paddingBottom = '';
+
+            // Otherwise iOS keeps the keyboard up for a field nobody can see.
+            if (sheet.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+        }
+
+        // iOS pins fixed elements to the layout viewport, part of which the
+        // keyboard covers. Lift the sheet by exactly that much.
+        function trackKeyboard() {
+            const viewport = window.visualViewport;
+            if (!viewport) return;
+
+            const sheet = document.getElementById('orderForm');
+            const update = () => {
+                const covered = Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop));
+                sheet.style.setProperty('--kb', covered + 'px');
+                sheet.classList.toggle('has-kb', covered > 0);
+            };
+
+            viewport.addEventListener('resize', update);
+            viewport.addEventListener('scroll', update);
         }
 
         function setupOrderSheet() {
@@ -1439,10 +1638,9 @@
                 submitOrder();
             });
 
-            document.getElementById('sheetSwap').addEventListener('click', () => {
-                cancelOrder();
-                document.querySelector('.menu').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
+            // Closing means "not ordering", so the name goes too. To switch
+            // drinks you just tap another one; the sheet stays up.
+            document.getElementById('sheetClose').addEventListener('click', resetOrderForm);
 
             document.getElementById('customerName').addEventListener('input', () => {
                 clearFieldError('nameField', 'nameError');
@@ -1450,61 +1648,6 @@
             document.getElementById('specialRequest').addEventListener('input', () => {
                 clearFieldError('noteField', 'noteError');
             });
-
-            document.getElementById('usualBtn').addEventListener('click', repeatUsual);
-        }
-
-        /* ---------------- the usual (one tap reorder) ---------------- */
-
-        function restoreUsual() {
-            let usual = null;
-            try {
-                usual = JSON.parse(localStorage.getItem(USUAL_KEY) || 'null');
-            } catch (error) {
-                usual = null;
-            }
-
-            if (!usual || !usual.product) return;
-
-            const card = document.querySelector(`.drink[data-product="${cssEscape(usual.product)}"]`);
-            if (!card) return;
-
-            document.getElementById('usualIcon').src = card.dataset.icon;
-            document.getElementById('usualLabel').textContent = 'עוד ' + usual.product + '?';
-            document.getElementById('usualBtn').hidden = false;
-        }
-
-        function rememberUsual(product, specialRequest) {
-            try {
-                localStorage.setItem(USUAL_KEY, JSON.stringify({ product, specialRequest }));
-            } catch (error) {
-                debugLog('could not save the usual', error);
-            }
-            restoreUsual();
-        }
-
-        // One tap: refills the previous drink and note and raises the sheet.
-        // The name is left empty: the phone is shared, so whoever orders
-        // types their own name.
-        function repeatUsual() {
-            let usual = null;
-            try {
-                usual = JSON.parse(localStorage.getItem(USUAL_KEY) || 'null');
-            } catch (error) {
-                return;
-            }
-            if (!usual) return;
-
-            const card = document.querySelector(`.drink[data-product="${cssEscape(usual.product)}"]`);
-            if (!card) return;
-
-            pickDrink(usual.product, card.dataset.icon);
-            document.getElementById('specialRequest').value = usual.specialRequest || '';
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function cssEscape(value) {
-            return String(value).replace(/["\\]/g, '\\$&');
         }
 
         /* ---------------- employee of the month ---------------- */
@@ -1651,18 +1794,63 @@
             );
         }
 
+        function setupConnectionStatus() {
+            renderConnection();
+
+            // Past this, "still connecting" has become "no connection".
+            setTimeout(() => {
+                startupGrace = false;
+                renderConnection();
+            }, STARTUP_GRACE_MS);
+
+            window.addEventListener('online', renderConnection);
+            window.addEventListener('offline', renderConnection);
+        }
+
         function updateConnectionStatus(connected) {
+            const changed = connected !== isConnected;
+            isConnected = connected;
+            if (connected) startupGrace = false;
+
+            renderConnection();
+            // Offline, pending badges show at once instead of after a delay.
+            if (changed) renderOrders();
+        }
+
+        function renderConnection() {
             const sign = document.getElementById('connectionStatus');
             const text = document.getElementById('connectionText');
 
-            sign.classList.toggle('is-open', connected);
-            sign.classList.toggle('is-shut', !connected);
-            text.textContent = connected ? 'פתוח · המכונה חמה' : 'אין קשר עם המטבח';
+            const state = isConnected ? 'open' : isOffline() ? 'shut' : 'warming';
+
+            sign.classList.toggle('is-open', state === 'open');
+            sign.classList.toggle('is-warming', state === 'warming');
+            sign.classList.toggle('is-shut', state === 'shut');
+
+            if (state === 'open') {
+                text.textContent = 'פתוח · המכונה חמה';
+            } else if (state === 'warming') {
+                text.textContent = 'מדליקים את המכונה';
+            } else {
+                text.textContent = savesOffline() ? 'אין רשת · הזמנות יחכו בטלפון' : 'אין קשר עם המטבח';
+            }
+        }
+
+        // Known to be offline, as opposed to still connecting after launch.
+        function isOffline() {
+            return !isConnected && !(startupGrace && navigator.onLine);
+        }
+
+        // True only when a queued order really survives closing the app.
+        function savesOffline() {
+            return Boolean(window.CoffeeDB && window.CoffeeDB.hasPersistentCache());
         }
 
         /* ---------------- ordering ---------------- */
 
         async function submitOrder() {
+            if (sendInFlight) return;
+
             const nameInput = document.getElementById('customerName');
             const noteInput = document.getElementById('specialRequest');
             const submitBtn = document.getElementById('submitBtn');
@@ -1688,51 +1876,74 @@
                 return;
             }
 
+            const orderedProduct = selectedProduct;
+
+            // Same person, same drink, still waiting for the network: that is
+            // a second tap on an order that already exists, not a new one.
+            const alreadyWaiting = orders.some(order => order.pending
+                && order.status === 'preparing'
+                && order.product_name === orderedProduct
+                && order.customer_name === customerName
+                && order.special_request === specialRequest);
+
+            if (alreadyWaiting) {
+                resetOrderForm();
+                showToast('ההזמנה הזו כבר בתור ומחכה לרשת ⏳', 'ok', 5000);
+                return;
+            }
+
+            sendInFlight = true;
             submitBtn.disabled = true;
             submitLabel.textContent = 'רץ למטבח...';
 
+            // No answer from the server in time. The order is already on this
+            // phone and shows in the queue as waiting, so free the form for the
+            // next person and say where the order actually is.
+            let handedOff = false;
+            const handoff = setTimeout(() => {
+                handedOff = true;
+                resetOrderForm();
+                releaseSendButton();
+                showToast(queuedMessage(), 'bad', 7000);
+            }, isOffline() ? HANDOFF_OFFLINE_MS : HANDOFF_ONLINE_MS);
+
             try {
-                const orderedProduct = selectedProduct;
+                // Resolves only once the server has the order.
+                await window.CoffeeDB.createOrder({
+                    id: window.CoffeeDB.newOrderId(),
+                    productName: orderedProduct,
+                    customerName: customerName,
+                    specialRequest: specialRequest
+                });
 
-                // Firestore queues writes locally and resolves only once the
-                // server acknowledges, so with no connection this never settles.
-                // The order is safely stored and will send by itself, but say so
-                // instead of leaving the button spinning forever.
-                let acknowledged = false;
-                let formReset = false;
-                const queuedNotice = setTimeout(() => {
-                    if (acknowledged) return;
-                    formReset = true;
+                clearTimeout(handoff);
+
+                if (handedOff) {
+                    showToast(`ההזמנה של ${customerName} הגיעה למטבח ✓`, 'ok');
+                } else {
                     resetOrderForm();
-                    showToast('אין חיבור. ההזמנה שמורה ותישלח כשהרשת תחזור.', 'bad', 7000);
-                    submitBtn.disabled = false;
-                    submitLabel.textContent = 'שלח לבריסטה';
-                }, 8000);
-
-                try {
-                    await window.CoffeeDB.createOrder({
-                        productName: orderedProduct,
-                        customerName: customerName,
-                        specialRequest: specialRequest
-                    });
-                } finally {
-                    acknowledged = true;
-                    clearTimeout(queuedNotice);
+                    showOrderCelebration(orderedProduct);
                 }
-
-                rememberUsual(orderedProduct, specialRequest);
-                // A late acknowledgement must not wipe a form the next person
-                // has already started filling in.
-                if (!formReset) resetOrderForm();
-                showOrderCelebration(orderedProduct);
-
             } catch (error) {
+                clearTimeout(handoff);
                 debugLog('order failed', error);
-                showToast('ההזמנה לא עברה: ' + error.message, 'bad', 6000);
+                showToast(`ההזמנה של ${customerName} לא עברה: ${error.message}`, 'bad', 6000);
             } finally {
-                submitBtn.disabled = false;
-                submitLabel.textContent = 'שלח לבריסטה';
+                if (!handedOff) releaseSendButton();
             }
+        }
+
+        function queuedMessage() {
+            const lead = isOffline() ? 'אין רשת.' : 'הרשת איטית.';
+            return savesOffline()
+                ? `${lead} ההזמנה שמורה בטלפון ותגיע למטבח לבד.`
+                : `${lead} ההזמנה תגיע למטבח כשהרשת תחזור. אל תסגרו את האפליקציה עד אז.`;
+        }
+
+        function releaseSendButton() {
+            sendInFlight = false;
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitLabel').textContent = 'שלח לבריסטה';
         }
 
         // Keeps the typed name, so switching drinks mid-order does not make
@@ -1755,6 +1966,14 @@
             document.getElementById('customerName').value = '';
         }
 
+        // Status changes show on their ticket as waiting until the server has
+        // them. Deletes just vanish, so offline they get a word of their own.
+        function noteIfOffline() {
+            if (!isOffline()) return false;
+            showToast('נמחק אצלך. אצל כולם זה יתעדכן כשהרשת תחזור.', 'bad', 5000);
+            return true;
+        }
+
         async function updateOrderStatus(orderId, newStatus) {
             try {
                 await window.CoffeeDB.updateOrderStatus(orderId, newStatus);
@@ -1765,9 +1984,11 @@
         }
 
         async function completeOrder(orderId) {
+            const offline = noteIfOffline();
+
             try {
                 await window.CoffeeDB.removeOrder(orderId);
-                showToast('בתיאבון', 'ok');
+                if (!offline) showToast('בתיאבון', 'ok');
             } catch (error) {
                 debugLog('complete failed', error);
                 showToast('לא הצלחתי לסגור: ' + error.message, 'bad');
@@ -1775,7 +1996,19 @@
         }
 
         async function deleteOrder(orderId) {
-            if (!confirm('לבטל את ההזמנה הזו?')) return;
+            const order = orders.find(item => item.id === orderId);
+            if (!order) return;
+
+            const confirmed = await askConfirm({
+                icon: '🫗',
+                title: `לבטל את ההזמנה של ${order.customer_name}?`,
+                body: `${order.product_name}. זה יימחק מהתור אצל כולם.`,
+                yes: 'כן, לבטל',
+                no: 'לא, שיישאר'
+            });
+            if (!confirmed) return;
+
+            noteIfOffline();
 
             try {
                 await window.CoffeeDB.removeOrder(orderId);
@@ -1791,15 +2024,67 @@
                 return;
             }
 
-            if (!confirm('למחוק את כל התור? גם את זה שכבר מוכן.')) return;
+            // Only what was on screen when asked: an order that lands while
+            // the question is open survives.
+            const orderIds = orders.map(order => order.id);
+
+            const confirmed = await askConfirm({
+                icon: '🧽',
+                title: 'לנקות את כל התור?',
+                body: 'גם את מה שכבר מוכן. זה יימחק אצל כולם.',
+                yes: 'כן, לנקות',
+                no: 'לא, רגע'
+            });
+            if (!confirmed) return;
+
+            const offline = noteIfOffline();
 
             try {
-                await window.CoffeeDB.removeAllOrders();
-                showToast('הדלפק נוקה', 'ok');
+                await window.CoffeeDB.removeOrders(orderIds);
+                if (!offline) showToast('הדלפק נוקה', 'ok');
             } catch (error) {
                 debugLog('clear all failed', error);
                 showToast('לא הצלחתי לנקות: ' + error.message, 'bad');
             }
+        }
+
+        // In-app replacement for window.confirm(). Resolves true or false.
+        function askConfirm({ icon, title, body, yes, no }) {
+            const scrim = document.getElementById('confirmScrim');
+            const sheet = document.getElementById('confirmSheet');
+            const yesBtn = document.getElementById('confirmYes');
+            const noBtn = document.getElementById('confirmNo');
+
+            document.getElementById('confirmIcon').textContent = icon;
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmBody').textContent = body;
+            yesBtn.textContent = yes;
+            noBtn.textContent = no;
+
+            scrim.hidden = false;
+            sheet.hidden = false;
+            noBtn.focus({ preventScroll: true });
+
+            return new Promise(resolve => {
+                const onKey = event => {
+                    if (event.key === 'Escape') finish(false);
+                };
+
+                const finish = answer => {
+                    scrim.hidden = true;
+                    sheet.hidden = true;
+                    yesBtn.onclick = null;
+                    noBtn.onclick = null;
+                    scrim.onclick = null;
+                    document.removeEventListener('keydown', onKey);
+                    resolve(answer);
+                };
+
+                yesBtn.onclick = () => finish(true);
+                noBtn.onclick = () => finish(false);
+                scrim.onclick = () => finish(false);
+                document.addEventListener('keydown', onKey);
+            });
         }
 
         /* ---------------- queue rendering ---------------- */
@@ -1808,8 +2093,12 @@
             const container = document.getElementById('ordersContainer');
             const countEl = document.getElementById('queueCount');
 
+            // The feed is oldest first, so whoever has waited longest is at
+            // the top of "in the works". Ready keeps newest first.
             const preparing = orders.filter(order => order.status === 'preparing');
-            const ready = orders.filter(order => order.status === 'ready');
+            const ready = orders.filter(order => order.status === 'ready').reverse();
+
+            markPending();
 
             countEl.textContent = orders.length ? orders.length : '';
 
@@ -1822,6 +2111,7 @@
                     </div>
                 `;
                 knownStatuses.clear();
+                pendingSince.clear();
                 firstRenderDone = true;
                 return;
             }
@@ -1858,9 +2148,38 @@
                     seenOrderIds.delete(id);
                 }
             });
+            [...pendingSince.keys()].forEach(id => {
+                if (!liveIds.has(id)) pendingSince.delete(id);
+            });
 
             justReady.forEach(id => burstOnTicket(id));
             firstRenderDone = true;
+        }
+
+        // Sets order.showPending: waiting for the server long enough to say
+        // so, or at all while offline. Schedules a re-render for the moment a
+        // still-fresh change crosses that line.
+        function markPending() {
+            const now = Date.now();
+            let nextReveal = Infinity;
+
+            orders.forEach(order => {
+                if (!order.pending) {
+                    pendingSince.delete(order.id);
+                    order.showPending = false;
+                    return;
+                }
+
+                if (!pendingSince.has(order.id)) pendingSince.set(order.id, now);
+                const revealAt = pendingSince.get(order.id) + PENDING_VISIBLE_MS;
+                order.showPending = !isConnected || now >= revealAt;
+                if (!order.showPending) nextReveal = Math.min(nextReveal, revealAt);
+            });
+
+            clearTimeout(pendingTimer);
+            pendingTimer = nextReveal === Infinity
+                ? null
+                : setTimeout(renderOrders, nextReveal - now + 20);
         }
 
         function renderTicket(order, justReady) {
@@ -1879,8 +2198,12 @@
             if (isReady) classes.push('ticket--ready');
             if (isNew) classes.push('is-new');
             if (turnedReady) classes.push('just-ready');
+            if (order.showPending) classes.push('is-pending');
 
             const safeId = escapeHtml(order.id);
+            // Offline, a ticket drawn after the icon left the browser cache
+            // cannot load it; the img hides itself rather than show a broken
+            // image in the cup.
             const icon = iconForProduct(order.product_name);
 
             const action = isReady
@@ -1896,7 +2219,7 @@
                 <article class="${classes.join(' ')}" data-order-id="${safeId}">
                     <div class="ticket-cup">
                         ${steam}
-                        <img src="${escapeHtml(icon)}" alt="">
+                        <img src="${escapeHtml(icon)}" alt="" onerror="this.hidden = true">
                     </div>
                     <div>
                         <div class="ticket-top">
@@ -1904,6 +2227,7 @@
                             <span class="ticket-time">${escapeHtml(timeString)}</span>
                         </div>
                         <p class="ticket-who">${escapeHtml(order.customer_name)}</p>
+                        ${order.showPending ? '<p class="ticket-pending">⏳ מחכה לרשת</p>' : ''}
                         ${order.special_request ? `<p class="ticket-note">${escapeHtml(order.special_request)}</p>` : ''}
                         <div class="ticket-actions">
                             ${action}
@@ -1977,6 +2301,10 @@
             const error = document.getElementById(errorId);
             error.hidden = true;
             error.textContent = '';
+        }
+
+        function cssEscape(value) {
+            return String(value).replace(/["\\]/g, '\\$&');
         }
 
         function escapeHtml(value) {
