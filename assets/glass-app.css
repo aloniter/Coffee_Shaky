@@ -35,8 +35,6 @@ body::after {content:'';position:fixed;inset:0;z-index:0;pointer-events:none;bac
 .open-sign::before,.open-sign::after {display:none;}
 .open-sign .bulb {width:6px;height:6px;box-shadow:0 0 0 4px #b8d6a00a,0 0 12px #b8d6a033;}
 .open-sign.is-open {color:var(--green-text);}
-.queue-shortcut {display:flex;align-items:center;gap:7px;min-height:30px;color:var(--ink-soft);text-decoration:none;font-size:11px;}
-.queue-shortcut svg {width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;}
 main {display:block;}
 .section-head {margin:0 2px 16px;align-items:center;}
 .section-head h2 {font-family:var(--font-ui);font-size:22px;font-weight:500;letter-spacing:-.7px;}
@@ -162,8 +160,7 @@ main {display:block;}
 .drink.is-picked::after {display:block;}
 .product-note {font-size:11px;}
 .tagline,.staff-tag,.sheet-eyebrow {font-size:11px;}
-.section-note,.open-sign,.queue-shortcut,#sheetDescription {font-size:12px;}
-.queue-shortcut {min-height:44px;}
+.section-note,.open-sign,#sheetDescription {font-size:12px;}
 .kitchen-line {padding-bottom:12px;}
 .sheet-close {width:44px;min-height:44px;}
 .sheet-product-copy {padding-bottom:8px;}
