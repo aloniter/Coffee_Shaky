@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>עמדת הבריסטה · Coffee Shaky</title>
+    <meta name="description" content="בית הקפה המשפחתי שלנו. בוחרים משקה, כותבים שם, והקפה בדרך.">
+    <meta name="theme-color" content="#100e0c">
+
+    <!-- Home Screen app: no Safari bars, its own name, dark status bar text
+         on the cream page ("black-translucent" would turn it white). -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Coffee Shaky">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Cut from coffee-shaky-premium-icon.png, the source of truth. -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=Suez+One&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="assets/base-app.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/glass-app.css">
+    <link rel="stylesheet" href="assets/barista.css">
+</head>
+<body class="barista-app" data-filter="all">
+    <div class="shell">
+        <header class="barista-header">
+            <a href="index.html" class="back-to-menu" aria-label="חזרה לתפריט"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg>לתפריט</a>
+            <span class="barista-brand" lang="en" dir="ltr">Coffee <em>Shaky.</em></span>
+        </header>
+        <div class="barista-intro"><p class="barista-eyebrow">מאחורי הדלפק</p><h1>עמדת הבריסטה</h1><p>כל ההזמנות, במקום אחד.</p></div>
+        <div class="barista-status-row"><div class="open-sign" id="connectionStatus"><span class="bulb" aria-hidden="true"></span><span id="connectionText">מתחברים למטבח</span></div>
+            <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span id="soundLabel">הפעלת צליל</span></button>
+        </div>
+        <div class="barista-filters" role="group" aria-label="סינון הזמנות">
+            <button type="button" data-filter="all" aria-pressed="true">הכל <span id="totalCount">0</span></button>
+            <button type="button" data-filter="ready" aria-pressed="false">מוכנים <span id="readyCount">0</span></button>
+        </div>
+        <main>
+            <section class="queue" aria-labelledby="queueHead">
+                <div class="section-head"><h2 id="queueHead">ההזמנות <span class="count" id="queueCount"></span></h2><button class="wipe" type="button" onclick="clearAllOrders()">ניקוי התור</button></div>
+                <div id="ordersContainer"></div>
+                <p class="filter-empty" id="filterEmpty" hidden></p>
+                <p class="queue-update" id="queueUpdate" role="status" aria-live="polite"></p>
+            </section>
+        </main>
+        <p class="barista-footnote">ההזמנות מתעדכנות כאן אוטומטית.</p>
+    </div>
+    <div class="scrim" id="confirmScrim" hidden></div>
+    <div class="confirm" id="confirmSheet" role="alertdialog" aria-modal="true"
+         aria-labelledby="confirmTitle" aria-describedby="confirmBody" hidden>
+        <span class="confirm-icon" id="confirmIcon" aria-hidden="true"></span>
+        <h3 id="confirmTitle"></h3>
+        <p id="confirmBody"></p>
+        <button class="confirm-yes" id="confirmYes" type="button"></button>
+        <button class="confirm-no" id="confirmNo" type="button"></button>
+    </div>
+
+
+    <aside class="new-order-alert" id="newOrderAlert" hidden aria-label="הזמנה חדשה">
+        <button type="button" class="new-order-open" id="newOrderOpen"><span class="new-order-title">קפה חדש בדרך ☕</span><span id="newOrderText" role="status" aria-live="polite" aria-atomic="true"></span><span class="new-order-link">להצגת ההזמנה ←</span></button>
+        <button type="button" class="new-order-dismiss" id="newOrderDismiss" aria-label="סגירת התראה">×</button>
+    </aside>
+    <audio id="orderChime" src="assets/audio/new-order.wav" preload="auto"></audio>
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <script src="firebase-config.js"></script>
+    <script type="module" src="firebase-db.js"></script>
+    <script defer src="assets/orders.js"></script>
+    <script defer src="assets/barista.js"></script>
+</body>
+</html>
