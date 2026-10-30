@@ -223,7 +223,7 @@ const PRODUCT_ICONS = {"הפוך הבית": "./assets/drinks/house.webp", "אס�
                 }
 
                 employeeImage.src = 'puma.jpeg';
-                employeeImage.alt = 'פומה, עובד החודש בפועל';
+                employeeImage.alt = 'פומה, עובדת החודש בפועל';
 
                 employeeFrame.classList.remove('puma-jump');
                 employeeBanner.classList.remove('meowing');
