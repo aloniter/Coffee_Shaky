@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="assets/base-app.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/glass-app.css">
+    <link rel="stylesheet" href="assets/coffee-pour.css">
 </head>
 <body>
     <div class="awning" aria-hidden="true"></div>
@@ -53,7 +54,8 @@
                     <div><h2 id="menuHead">מה שותים?</h2><p class="section-note">הקפה שלך, בדיוק בדרך שלך.</p></div><span class="menu-label" lang="en">Made with love.</span>
                 </div>
 
-                <div class="menu-grid">
+                <div id="coffeePourRoot"></div>
+                <div class="menu-grid" id="classicMenu">
                     <button class="drink drink--hero" type="button" data-kind="house" data-product="הפוך הבית" data-icon="./assets/drinks/house.webp">
                         <span class="drink-flag">הכי בית שיש</span>
                         <span class="product-art"><img src="assets/drinks/house.webp" alt="" width="320" height="320" fetchpriority="high" decoding="async"></span>
@@ -159,5 +161,6 @@
     </div>
     <script defer src="assets/glass-app.js"></script>
     <script defer src="assets/cat-visit.js"></script>
+    <script defer src="assets/coffee-pour.js"></script>
 </body>
 </html>

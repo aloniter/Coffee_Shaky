@@ -7,8 +7,8 @@
   let lastCard=null;
 
   document.addEventListener('coffee:select',event=>{
-    lastCard=event.detail.card;
-    document.getElementById('sheetDescription').textContent=lastCard.querySelector('.product-note').textContent;
+    lastCard=event.detail.trigger ?? event.detail.card;
+    document.getElementById('sheetDescription').textContent=event.detail.card.querySelector('.product-note').textContent;
     shell.inert=true;dock.inert=true;document.body.style.overflow='hidden';
   });
   document.addEventListener('coffee:close',()=>{

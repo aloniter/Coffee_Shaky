@@ -2,3 +2,5 @@
 
 # Local visual QA output
 artifacts/
+node_modules/
+.taste-skill/

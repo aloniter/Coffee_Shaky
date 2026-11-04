@@ -86,6 +86,11 @@ const PRODUCT_ICONS = {"הפוך הבית": "./assets/drinks/house.webp", "אס�
         /* ---------------- drink picking ---------------- */
 
         function setupMenuSelection() {
+            // React's pour menu uses the same selection and order path as the cards.
+            document.addEventListener('coffee:request', event => {
+                const card = [...document.querySelectorAll('.drink')].find(item => item.dataset.kind === event.detail.kind);
+                if (card) pickDrink(card, event.detail.trigger);
+            });
             document.querySelectorAll('.drink').forEach(item => {
                 // The name lives in an <h3> next to an alt="" illustration, so
                 // label the button itself rather than relying on subtree text.
@@ -96,7 +101,7 @@ const PRODUCT_ICONS = {"הפוך הבית": "./assets/drinks/house.webp", "אס�
             });
         }
 
-        function pickDrink(card) {
+        function pickDrink(card, trigger = card) {
             const product = card.dataset.product;
             const icon = card.dataset.icon;
             selectedProduct = product;
@@ -124,7 +129,7 @@ const PRODUCT_ICONS = {"הפוך הבית": "./assets/drinks/house.webp", "אס�
 
             openSheet(card);
 
-            document.dispatchEvent(new CustomEvent('coffee:select', { detail: { card } }));
+            document.dispatchEvent(new CustomEvent('coffee:select', { detail: { card, trigger } }));
         }
 
         function openSheet(card) {

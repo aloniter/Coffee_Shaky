@@ -12,10 +12,10 @@ async function waitCount(page, selector, count) {
   for(const width of [390,430]) {
    const context=await browser.newContext({viewport:{width,height:width===390?844:932},isMobile:true,hasTouch:true,deviceScaleFactor:2});
    const errors=[], external=[];
-   context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
+   context.on('page',p=>p.on('pageerror',e=>errors.push(`${p.url()}: ${e.stack || e.message}`)));
    context.on('request',r=>{if(/firestore|firebase/.test(r.url())&&!r.url().startsWith(origin))external.push(r.url());});
    const home=await context.newPage();
-   await home.goto(origin);
+   await home.goto(`${origin}/?menu=classic`);
    await home.waitForFunction(()=>document.querySelector('#connectionStatus').classList.contains('is-open'));
    // Reset only the in-memory local kitchen.
    await home.evaluate(async()=>{const rows=await (await fetch('/__preview/orders')).json();await CoffeeDB.removeOrders(rows.map(r=>r.id));});
@@ -106,7 +106,7 @@ async function waitCount(page, selector, count) {
   }
   // Original offline duplicate prevention still runs on the menu without tickets.
   const p=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-  await isolateDatabase(p);await p.goto(origin);await p.evaluate(()=>__testDB.offline=true);
+  await isolateDatabase(p);await p.goto(`${origin}/?menu=classic`);await p.evaluate(()=>__testDB.offline=true);
   for(let i=0;i<2;i++) {
    await p.locator('[data-kind="espresso"]').click();await p.locator('#customerName').fill('הזמנה ממתינה');await p.locator('#submitBtn').click();
    await p.waitForFunction(()=>!document.querySelector('#orderForm').classList.contains('is-up'),null,{timeout:8000});
