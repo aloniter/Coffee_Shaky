@@ -37,10 +37,11 @@
 .pour-switch button:focus-visible,.pour-choice:focus-visible,.pour-order:focus-visible { outline:2px solid var(--amber); outline-offset:4px; }
 .pour-choice:focus-visible { outline-color:var(--pour-ink); }
 html[data-pour-active="true"] .menu-grid .drink:not([data-kind="tea"]):not([data-kind="other"]) { display:none; }
-html[data-pour-active="true"] .menu-grid .drink { height:108px; flex-direction:row; align-items:center; padding:12px; }
-html[data-pour-active="true"] .menu-grid .product-art { width:58px; height:76px; flex:none; }
-html[data-pour-active="true"] .menu-grid .product-art img { width:76px; height:76px; top:0; max-width:none; }
-html[data-pour-active="true"] .menu-grid .product-copy { padding:0 5px 0 0; }
+html[data-pour-active="true"] .menu-grid { gap:16px; }
+html[data-pour-active="true"] .menu-grid .drink { display:grid; grid-template-columns:60px minmax(0,1fr); gap:14px; height:116px; align-items:center; padding:12px; }
+html[data-pour-active="true"] .menu-grid .product-art { width:60px; height:76px; }
+html[data-pour-active="true"] .menu-grid .product-art img { width:60px; height:76px; top:0; max-width:100%; }
+html[data-pour-active="true"] .menu-grid .product-copy { padding:0; }
 html[data-pour-active="true"] .menu-grid .product-note { white-space:normal; font-size:11px; }
 html[data-pour-active="true"] .menu-grid .product-add { display:none; }
 @media(max-width:370px) { .pour-experience { padding:12px; } .pour-choice-name { font-size:14px; } .pour-caption [lang="en"] { font-size:16px; } }
